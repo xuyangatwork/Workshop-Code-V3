@@ -458,9 +458,8 @@ def prototype_claude_bot(bot_name= PROTOTYPE):
 				prompt_template = prompt_template_prototype(prompt)
 				with client.messages.stream(
 						max_tokens=1024,
+      					system=prompt_template,	
 						messages=[
-							{"role": "user", "content": "I need help"},
-							{"role": "assistant", "content": prompt_template},	
 		  					{"role": "user", "content": prompt}
 			   			],
 						model=st.session_state.prototype_model,

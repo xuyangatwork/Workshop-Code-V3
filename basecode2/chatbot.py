@@ -11,7 +11,7 @@ import streamlit as st
 import openai
 from openai import OpenAI
 import sqlite3
-from basecode2.authenticate import return_openai_key
+from basecode2.authenticate import return_openai_key, return_claude_key
 from datetime import datetime
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
@@ -20,6 +20,9 @@ from langchain.chat_models import ChatOpenAI
 import streamlit_antd_components as sac
 import os
 from Markdown2docx import Markdown2docx
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+import anthropic
+
 
 class ConfigHandler:
 	def __init__(self):
@@ -200,7 +203,7 @@ def prompt_template_function(prompt, memory_flag, rag_flag):
 		return st.session_state.chatbot
 
 
-def openai_base_bot(bot_name, memory_flag, rag_flag):
+def openai_base_bot(bot_name, c_model, memory_flag, rag_flag):
 	client = OpenAI(
 	api_key=return_openai_key(),)	
 	full_response = ""
@@ -231,7 +234,7 @@ def openai_base_bot(bot_name, memory_flag, rag_flag):
 			with messages.chat_message("assistant"):
 				prompt_template = prompt_template_function(prompt, memory_flag, rag_flag)
 				stream = client.chat.completions.create(
-					model=st.session_state.openai_model,
+					model=c_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
 						{"role": "user", "content": prompt},
@@ -256,6 +259,61 @@ def openai_base_bot(bot_name, memory_flag, rag_flag):
 	except Exception as e:
 		st.exception(e)
 	
+ 
+def claude_bot(bot_name, c_model, memory_flag, rag_flag):
+	client = anthropic.Anthropic(api_key=return_claude_key())
+	greetings_str = f"Hi, I am Claude {bot_name}"
+	help_str = "How can I help you today?"
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])	
+	
+	try:
+		if prompt := st.chat_input("Enter your query"):
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				prompt_template = prompt_template_function(prompt, memory_flag, rag_flag)
+				with client.messages.stream(
+						max_tokens=1024,
+	  					system=prompt_template,	
+						messages=[
+		  					{"role": "user", "content": prompt}
+			   			],
+						model=c_model,
+					) as stream:
+        
+						response = st.write_stream(stream.text_stream)
+			st.session_state.msg.append({"role": "assistant", "content": response})
+			st.session_state["memory"].save_context({"input": prompt},{"output": response})
+			 # Insert data into the table
+			now = datetime.now() # Using ISO format for date
+			response_str = str(response)
+			prompt_str = str(prompt)
+			# Now concatenate and calculate the length as intended.
+			num_tokens = len(response_str + prompt_str) * 1.3
+			#st.write(num_tokens)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  response_str, prompt_str, num_tokens, bot_name)
+			
+	except Exception as e:
+		st.exception(e)
+
+ 
+ 
 def store_summary_chatbot_response():
 	all_messages_string = " ".join(message["content"] for message in st.session_state.msg)
 	client = OpenAI(
@@ -281,10 +339,12 @@ def main_chatbot_functions():
 			if st.session_state.user['profile_id'] == STU:
 				set_default_template(DEFAULT_TEXT)
 			else:
+				chat_bot = st.selectbox("Select Chatbot", ["gpt-4-turbo-preview", "gpt-3.5-turbo"])	
 				prompt_templates = display_prompts()
 				if st.checkbox("Select Prompt", value=False):
 					if prompt_templates:
 						select_and_set_prompt(prompt_templates, True)
+		
 		with c2:
 			if rag:
 				st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
@@ -306,13 +366,14 @@ def main_chatbot_functions():
 	
 	b1, b2 = st.columns([3,1])
 	with b1:
+		
 		if st.button("Clear Chat"):
 			clear_session_states()
-			#st.write(store_summary_chatbot_response())
-
-		#st.write(return_openai_key())
-		#st.write(st.secrets["openai_key"
-		openai_base_bot(CHATBOT, memory, rag)
+	
+			#if chat_bot.startswith("claude"):
+			#claude_bot(CHATBOT, chat_bot, memory, rag)
+			#else:
+		openai_base_bot(CHATBOT, chat_bot, memory, rag)
 	with b2:
 		with st.container(border=True):
 			if rag:

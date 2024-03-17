@@ -301,6 +301,7 @@ def u_update_rag_list(u_name, new_value):
 
 
 def load_rag():
+	os.environ["OPENAI_API_KEY"] = return_openai_key()
 	initialise_rag_collection()
 	# Fetch all RAGs for the current user
 	if st.toggle("Load Personal RAG"):
