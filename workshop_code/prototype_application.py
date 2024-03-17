@@ -5,7 +5,7 @@ import sqlite3
 import openai
 from openai import OpenAI
 import os
-from basecode2.authenticate import return_cohere_key, return_openai_key, return_google_key
+from basecode2.authenticate import return_cohere_key, return_openai_key, return_google_key, return_claude_key
 from datetime import datetime
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
@@ -14,6 +14,8 @@ import configparser
 import cohere
 import google.generativeai as genai
 import ast
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+import anthropic
 
 
 class ConfigHandler:
@@ -217,8 +219,10 @@ def my_first_app_advance(bot_name=PROTOTYPE):
 		prototype_gemini_bot(bot_name)
 	elif st.session_state.prototype_model == "cohere":
 		prototype_cohere_bot(bot_name)
-	else:
+	elif st.session_state.prototype_model.startswith("gpt"):
 		prototype_advance_bot(bot_name)
+	else:
+		prototype_claude_bot(bot_name)
 
 def prototype_settings():
 	if "my_app_template" not in st.session_state:
@@ -226,6 +230,9 @@ def prototype_settings():
 	
 	if "my_form_template" not in st.session_state:
 		st.session_state.my_form_template = MY_FORM
+  
+	if "my_app_template_advance" not in st.session_state:
+		st.session_state.my_app_template_advance = MY_APP_ADVANCE
 		
 	init_settings()
 	tab1, tab2, tab3, tab4 = st.tabs([ "Chatbot Prompt Settings", "Chatbot Parameter Settings", "KB settings", "Form Prompt Settings"])
@@ -241,9 +248,10 @@ def prototype_settings():
 			st.session_state.prototype_model = "gpt-3.5-turbo"
 		
 		st.write("Current Model: ",st.session_state.prototype_model)
-		model_settings = st.selectbox("Select a model", ["gpt-4-turbo-preview", "gpt-3.5-turbo", "cohere", "gemini-pro"])
+		model_settings = st.selectbox("Select a model", ["gpt-4-turbo-preview", "gpt-3.5-turbo", "cohere", "gemini-pro","claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"])
 		if st.button("Update Model"):
 			st.session_state.prototype_model = model_settings
+		#test
 		chatbot_settings()
 
 	with tab3:
@@ -312,7 +320,7 @@ def chat_completion_prototype(prompt):
 
 def prototype_advance_bot(bot_name= PROTOTYPE):
 	
-	greetings_str = f"Hi, I am {bot_name}"
+	greetings_str = f"Hi, I am OpenAI {bot_name}"
 	help_str = "How can I help you today?"
 	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
 	if 'msg' not in st.session_state:
@@ -359,7 +367,7 @@ def prototype_advance_bot(bot_name= PROTOTYPE):
 
 def prototype_gemini_bot(bot_name= PROTOTYPE):
 	genai.configure(api_key = return_google_key())
-	greetings_str = f"Hi, I am {bot_name}"
+	greetings_str = f"Hi, I am Gemini {bot_name}"
 	help_str = "How can I help you today?"
 	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
 	if 'msg' not in st.session_state:
@@ -388,6 +396,8 @@ def prototype_gemini_bot(bot_name= PROTOTYPE):
 				full_response = ""
 				#response = 
 				chat_model = genai.GenerativeModel('gemini-pro')
+				prompt_template = prompt_template_prototype(prompt)
+				prompt = prompt_template + "\n This is the user query" + prompt,
 				response_stream = chat_model.generate_content(prompt, stream=True)
 				for response_object in response_stream:
 				# Check if response_object has a 'text' attribute
@@ -402,14 +412,70 @@ def prototype_gemini_bot(bot_name= PROTOTYPE):
 				message_placeholder.markdown(full_response)
 						
 			st.session_state.msg.append({"role": "assistant", "content": full_response})
-
-
 			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
 			 # Insert data into the table
 			now = datetime.now() # Using ISO format for date
-			num_tokens = len(full_response + prompt)*1.3
+			full_response_str = str(full_response)
+			prompt_str = str(prompt)
+
+			# Now concatenate and calculate the length as intended.
+			num_tokens = len(full_response_str + prompt_str) * 1.3
 			#st.write(num_tokens)
-			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response_str, prompt_str, num_tokens, bot_name)
+			
+	except Exception as e:
+		st.exception(e)
+  
+#----------------Claude Bot--------------------------------
+
+def prototype_claude_bot(bot_name= PROTOTYPE):
+	client = anthropic.Anthropic(api_key=return_claude_key())
+	greetings_str = f"Hi, I am Claude {bot_name}"
+	help_str = "How can I help you today?"
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])	
+	
+	try:
+		if prompt := st.chat_input("Enter your query"):
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				prompt_template = prompt_template_prototype(prompt)
+				with client.messages.stream(
+						max_tokens=1024,
+						messages=[
+							{"role": "user", "content": "I need help"},
+							{"role": "assistant", "content": prompt_template},	
+		  					{"role": "user", "content": prompt}
+			   			],
+						model=st.session_state.prototype_model,
+					) as stream:
+						response = st.write_stream(stream.text_stream)
+			st.session_state.msg.append({"role": "assistant", "content": response})
+			st.session_state["memory"].save_context({"input": prompt},{"output": response})
+			 # Insert data into the table
+			now = datetime.now() # Using ISO format for date
+			response_str = str(response)
+			prompt_str = str(prompt)
+			# Now concatenate and calculate the length as intended.
+			num_tokens = len(response_str + prompt_str) * 1.3
+			#st.write(num_tokens)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  response_str, prompt_str, num_tokens, bot_name)
 			
 	except Exception as e:
 		st.exception(e)
@@ -421,7 +487,7 @@ def prototype_gemini_bot(bot_name= PROTOTYPE):
 
 def prototype_cohere_bot(bot_name= PROTOTYPE):
 	co = cohere.Client(return_cohere_key())
-	greetings_str = f"Hi, I am {bot_name}"
+	greetings_str = f"Hi, I am Cohere {bot_name}"
 	help_str = "How can I help you today?"
 	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
 	if 'msg' not in st.session_state:

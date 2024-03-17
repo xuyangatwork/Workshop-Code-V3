@@ -1,5 +1,5 @@
 #No need SQLite
-#import nltk
+import nltk
 import streamlit as st
 from streamlit_antd_components import menu, MenuItem
 import streamlit_antd_components as sac
@@ -36,7 +36,16 @@ from workshop_code.knowledge_bot import rag_bot
 from workshop_code.analytics_bot import basic_analysis_bot
 from workshop_code.agent import agent_bot, agent_management
 import configparser
+import os
 import ast
+import ssl
+              
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 class ConfigHandler:
 	def __init__(self):
@@ -63,6 +72,8 @@ SA = config_handler.get_value('constants', 'SA')
 AD = config_handler.get_value('constants', 'AD')
 ACK = config_handler.get_value('application_agreement', 'ACK')
 PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
+os.environ['TIKTOKEN_CACHE_DIR'] = st.secrets["NLTK_DATA"]
+os.environ['NLTK_DATA'] = st.secrets["NLTK_DATA"]
 
 
 #function for menu options
@@ -161,7 +172,29 @@ def main():
 		load_app_session_states()
 		initialise_admin_account()
 		st.title(st.session_state.title_page)
-		sac.divider(label='AIED Office Prompt Analytics', icon='house', align='center')
+		sac.divider(label='Artificial Intelligence by Joe Tay', icon='house', align='center')
+  
+			# Define the NLTK data directory
+		nltk_data_dir = st.secrets["NLTK_DATA"]
+
+		# Ensure the NLTK data directory exists
+		if not os.path.exists(nltk_data_dir):
+			os.makedirs(nltk_data_dir, exist_ok=True)
+
+		# Update the NLTK data path to include the custom directory
+		nltk.data.path.append(nltk_data_dir)
+
+		def download_nltk_data_if_absent(package_name):
+			try:
+				# Try loading the package to see if it exists in the custom directory
+				nltk.data.find("tokenizers/" + package_name)
+			except LookupError:
+				# If the package doesn't exist, download it to the specified directory
+				nltk.download(package_name, download_dir=nltk_data_dir)
+
+		# Example usage
+		download_nltk_data_if_absent('punkt')
+		download_nltk_data_if_absent('stopwords')
 			
 		#initialize session state options for side menubar for the application
 		if "options" not in st.session_state:

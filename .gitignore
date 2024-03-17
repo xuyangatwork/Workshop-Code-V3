@@ -15,3 +15,4 @@ cache/
 .DS_Store
 test.py
 prompt_analyser copy.py
+resources/nltk_data_dir/

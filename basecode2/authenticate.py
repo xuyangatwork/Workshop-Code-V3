@@ -43,3 +43,6 @@ def return_cohere_key():
 
 def return_google_key():
 	return st.session_state.google_key
+
+def return_claude_key():
+	return st.session_state.claude_key
