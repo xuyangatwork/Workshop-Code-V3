@@ -58,6 +58,13 @@ def encode_image(image_path):
 def get_file_extension(file_name):
 	return os.path.splitext(file_name)[-1]
 
+def clear_session_states():
+	st.session_state.msg = []
+	if "memory" not in st.session_state:
+		pass
+	else:
+		del st.session_state["memory"]
+
 def rag_bot():
 	if "graph_bot" in st.session_state:
 		st.session_state.chatbot = st.session_state.graph_bot
@@ -78,6 +85,9 @@ def rag_bot():
 				st.rerun()
 	
 	k1, k2 = st.columns([2,2])
+ 
+	if st.button("Clear Chat"):
+		clear_session_states()
 
 	with k1:
 		if st.session_state.vs:#chatbot with knowledge base
