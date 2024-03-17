@@ -46,3 +46,6 @@ def return_google_key():
 
 def return_claude_key():
 	return st.session_state.claude_key
+
+def return_serp_key():
+	return st.session_state.serp_key

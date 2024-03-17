@@ -1,6 +1,6 @@
 import streamlit as st
 import openai
-from basecode2.authenticate import return_openai_key
+from basecode2.authenticate import return_openai_key, return_serp_key
 from langchain.tools import YouTubeSearchTool
 import os
 from basecode2.rag_mongodb import load_rag
@@ -12,6 +12,7 @@ from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.tools import DuckDuckGoSearchRun
 from langchain.tools import WikipediaQueryRun
 from langchain.utilities import WikipediaAPIWrapper
+from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain.agents import tool
 import json
 
@@ -45,6 +46,12 @@ def dalle_image_generator(query):
 	image_url = response['data'][0]['url']
 	return image_url
 
+@tool("Google Search")
+def google_search(query: str) -> str:
+	"Use this function to search for documents in Google"
+	search = GoogleSerperAPIWrapper()
+	results = search.run(query)
+	return results
 
 #customise more tools for your agent
 
@@ -69,6 +76,7 @@ def agent_bot():
   
 	openai.api_key = return_openai_key()
 	os.environ["OPENAI_API_KEY"] = return_openai_key()
+	os.environ["SERPER_API_KEY"] = return_serp_key()
 	msgs = StreamlitChatMessageHistory()
 	memory = ConversationBufferMemory(
 		chat_memory=msgs,
@@ -126,6 +134,7 @@ def agent_management():
 			"Document Search": document_search,
 			"Wiki Search": wiki_search,
 			"Internet Search": DuckDuckGoSearchRun(name="Internet Search"),
+			"Google Search": google_search,
 			"YouTube Search": YouTubeSearchTool(),
 		
 			}
@@ -133,6 +142,7 @@ def agent_management():
 		all_tools = {
 			"Wiki Search": wiki_search,
 			"Internet Search": DuckDuckGoSearchRun(name="Internet Search"),
+			"Google Search": google_search,
 			"YouTube Search": YouTubeSearchTool(),
 		
 		}
