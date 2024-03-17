@@ -315,6 +315,8 @@ def setup_users():
 				default_password = st.text_input("Default Password", value=st.session_state.default_password, type="password")
 				if st.checkbox("Customise Usernames"):
 					username_prefix = st.text_input("Username Prefix", value=school[:3], max_chars=10)
+				else:
+					username_prefix = school[:3]
 				if st.button("Create Users"):
 					if school and default_password:
 						create_users(school, num_users, default_password, default_profile, username_prefix)

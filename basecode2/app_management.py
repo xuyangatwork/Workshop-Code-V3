@@ -61,6 +61,7 @@ def load_app_settings(): #load_prompt settings
 	for key, value in doc.items():
 		if key not in st.session_state and key not in excluded_fields:
 			st.session_state[key] = value
+			print(key, value)
 	return True
 		#load all app settings flag to true
 	

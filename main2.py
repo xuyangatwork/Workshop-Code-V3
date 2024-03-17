@@ -31,7 +31,7 @@ from workshop_code.api_calls import call_api
 from workshop_code.prompt_designs import prompt_designs_llm 
 from workshop_code.prototype_application import my_first_app, my_first_app_advance, prototype_settings
 from workshop_code.educational_bots import starting_bot, network_bot, language_bot, linking_bot
-#from workshop_code.empathy_bot import empathy_bot
+from workshop_code.assistant_bot import assistant_demo
 from workshop_code.knowledge_bot import rag_bot
 from workshop_code.analytics_bot import basic_analysis_bot
 from workshop_code.agent import agent_bot, agent_management
@@ -226,7 +226,7 @@ def main():
 					sac.MenuItem('GenAI Capabilities', icon='book', children=[
 						sac.MenuItem(return_function_name('AI Analytics'), icon='graph-up'),
 						sac.MenuItem(return_function_name('Knowledge Graph Bot'), icon='diagram-3'),
-						#sac.MenuItem(return_function_name('Empathy Bot'), icon='chat-heart'),
+						sac.MenuItem(return_function_name('Teacher Assistant Bot'), icon='chat-heart'),
 					]),	
 
 					sac.MenuItem('Educational Chatbots', icon='book', children=[
@@ -358,9 +358,9 @@ def main():
 		elif st.session_state.option == 'Knowledge Graph Bot':
 			st.subheader(f":green[{st.session_state.option}]")
 			rag_bot()             
-		elif st.session_state.option == 'Empathy Bot':
+		elif st.session_state.option == 'Teacher Assistant Bot':
 			st.subheader(f":green[{st.session_state.option}]")
-			#empathy_bot()
+			assistant_demo()
 		elif st.session_state.option == "KB (RAG) Management":
 			st.subheader(f":green[{st.session_state.option}]") 
 			rag_creator_mongodb()

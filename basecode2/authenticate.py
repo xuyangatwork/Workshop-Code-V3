@@ -49,3 +49,6 @@ def return_claude_key():
 
 def return_serp_key():
 	return st.session_state.serp_key
+
+def return_assistant_id_1():
+	return st.session_state.assistant_id_1
