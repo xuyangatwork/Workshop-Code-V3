@@ -83,13 +83,11 @@ def rag_bot():
 				st.session_state.vs = None
 				st.session_state.current_kb_model = ""
 				st.rerun()
-	
-	k1, k2 = st.columns([2,2])
- 
 	if st.button("Clear Chat"):
-		clear_session_states()
-
+			clear_session_states()
+	k1, k2 = st.columns([2,2])
 	with k1:
+		
 		if st.session_state.vs:#chatbot with knowledge base
 			rag_base_bot(RAG_BOT, True, True) #chatbot with knowledge base and memory
 		else:#chatbot with no knowledge base
