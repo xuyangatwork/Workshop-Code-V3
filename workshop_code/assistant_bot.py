@@ -11,7 +11,7 @@ import time
 #######################################
 # PREREQUISITES
 #######################################
-assistant_id = return_assistant_id_1()
+
 assistant_state = "assistant"
 thread_state = "thread"
 conversation_state = "conversation"
@@ -29,7 +29,7 @@ def init_session_state():
 		api_key=return_openai_key(),
 	)
 	if (assistant_state not in st.session_state) or (thread_state not in st.session_state):
-		st.session_state[assistant_state] = client.beta.assistants.retrieve(assistant_id)
+		st.session_state[assistant_state] = client.beta.assistants.retrieve(return_assistant_id_1())
 		st.session_state[thread_state] = client.beta.threads.create()
 
 	if conversation_state not in st.session_state:
