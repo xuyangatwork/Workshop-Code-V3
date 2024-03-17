@@ -183,6 +183,7 @@ Pygments==2.17.2
 PyJWT==2.8.0
 pylance==0.9.7
 pylibsrtp==0.10.0
+pymongo==4.6.2
 PyMuPDF==1.23.22
 PyMuPDFb==1.23.22
 pyOpenSSL==24.0.0
@@ -231,6 +232,8 @@ tensorboard==2.15.2
 tensorboard-data-server==0.7.2
 tensorflow==2.15.0
 tensorflow-estimator==2.15.0
+tensorflow-io-gcs-filesystem==0.36.0
+tensorflow-macos==2.15.0
 termcolor==2.4.0
 tiktoken==0.6.0
 timm==0.9.12
@@ -256,6 +259,7 @@ urllib3==2.0.7
 validators==0.22.0
 wcwidth==0.2.13
 Werkzeug==3.0.1
+wikipedia==1.4.0
 wrapt==1.14.1
 xlrd==2.0.1
 XlsxWriter==3.1.9
