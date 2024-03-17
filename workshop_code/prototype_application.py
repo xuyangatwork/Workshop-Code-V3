@@ -524,7 +524,7 @@ def basic_bot(prompt, bot_name= "Prototype"):
 			message_placeholder.markdown(full_response)
 			now = datetime.now() # Using ISO format for date
 			num_tokens = len(full_response + prompt)*1.3
-			#st.write(num_tokens)
+			# #st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
 			
 	except Exception as e:
