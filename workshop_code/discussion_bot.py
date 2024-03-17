@@ -225,7 +225,7 @@ def main_discussion_bot():
 		st.session_state.extract_data = ""
 	if "analyse_discussion" not in st.session_state:
 		st.session_state.analyse_discussion = False
-	fetch_and_create_session_states()
+	#fetch_and_create_session_states()
 	if st.session_state.user['profile_id'] == SA:
 		with st.expander("Discussion Bot Settings"):
 			analyse_responses = st.toggle('Switch on to analyse responses')
