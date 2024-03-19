@@ -195,7 +195,7 @@ def main():
 			except LookupError:
 				# If the package doesn't exist, download it to the specified directory
 				nltk.download(package_name, download_dir=nltk_data_dir)
-		print(f"Iteration: {st.session_state.iterate + 1}")
+		#print(f"Iteration: {st.session_state.iterate + 1}")
 		# Example usage
 		download_nltk_data_if_absent('punkt')
 		download_nltk_data_if_absent('stopwords')
