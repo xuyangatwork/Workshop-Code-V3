@@ -39,13 +39,13 @@ import configparser
 import os
 import ast
 import ssl
-              
+			  
 try:
-    _create_unverified_https_context = ssl._create_unverified_context
+	_create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
-    pass
+	pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context
+	ssl._create_default_https_context = _create_unverified_https_context
 
 class ConfigHandler:
 	def __init__(self):
@@ -118,6 +118,8 @@ def load_app_session_states():
 
 	if "start" not in st.session_state:
 		st.session_state.start = 0
+  
+	
 
 	# if "load_templates" not in st.session_state:
 	# 	st.session_state.load_templates = False
@@ -161,8 +163,7 @@ def load_chatbot_session_states():
 	if "rag_response" not in st.session_state:
 		st.session_state.rag_response = None
   
-	if "iterate" not in st.session_state:
-		st.session_state.iterate = 0
+	
 
 def load_safa_session_states():
 	#initialize session state for JSON Tools in Short Answer
@@ -202,7 +203,10 @@ def main():
 		#initialize session state options for side menubar for the application
 		if "options" not in st.session_state:
 			st.session_state.options = False
-
+   
+		if "iterate" not in st.session_state:
+			st.session_state.iterate = 0
+		print(f"Iteration: {st.session_state.iterate + 1}")
 		with st.sidebar: #options for sidebar
 			if st.session_state.login == False:
 				
