@@ -160,6 +160,9 @@ def load_chatbot_session_states():
 
 	if "rag_response" not in st.session_state:
 		st.session_state.rag_response = None
+  
+	if "iterate" not in st.session_state:
+		st.session_state.iterate = 0
 
 def load_safa_session_states():
 	#initialize session state for JSON Tools in Short Answer
@@ -191,7 +194,7 @@ def main():
 			except LookupError:
 				# If the package doesn't exist, download it to the specified directory
 				nltk.download(package_name, download_dir=nltk_data_dir)
-
+		print(f"Iteration: {st.session_state.iterate + 1}")
 		# Example usage
 		download_nltk_data_if_absent('punkt')
 		download_nltk_data_if_absent('stopwords')
