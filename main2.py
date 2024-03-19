@@ -204,9 +204,7 @@ def main():
 		if "options" not in st.session_state:
 			st.session_state.options = False
    
-		if "iterate" not in st.session_state:
-			st.session_state.iterate = 0
-		print(f"Iteration: {st.session_state.iterate + 1}")
+
 		with st.sidebar: #options for sidebar
 			if st.session_state.login == False:
 				

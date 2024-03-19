@@ -1,16 +1,12 @@
 from basecode2.authenticate import hash_password
-import streamlit_antd_components as sac
 import streamlit as st
-import time
 import pandas as pd
 import configparser
-import os
 import ast
 from pymongo import MongoClient
 #from bson import ObjectId
-import certifi
-import botocore 
-import botocore.session 
+import time
+
 
 class ConfigHandler:
 	def __init__(self):
@@ -58,6 +54,7 @@ def load_user_profile():
 		return False
 
 def initialise_admin_account():
+	start_time = time.time()
 
 	if "s_collection" in st.session_state:
 		st.session_state.s_collection = None
@@ -80,7 +77,11 @@ def initialise_admin_account():
 	st.session_state.u_collection = db["users"]
 
 	super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
-	
+	end_time = time.time()
+
+	# Calculate and print execution time
+	execution_time = end_time - start_time
+	print(f"Execution time: {execution_time} seconds")
 	if super_admin_exists:
 		#st.success("Super admin account already exists!")
 		return
