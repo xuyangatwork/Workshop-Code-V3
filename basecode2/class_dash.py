@@ -7,9 +7,6 @@ import configparser
 import os
 import ast
 # Create or check for the 'database' directory in the current working directory
-cwd = os.getcwd()
-WORKING_DIRECTORY = os.path.join(cwd, "database")
-WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
 
 #WORKING DATABASE REMOVED
 	
@@ -32,6 +29,12 @@ TCH = config_handler.get_config_values('constants', 'TCH')
 STU = config_handler.get_config_values('constants', 'STU')
 SA = config_handler.get_config_values('constants', 'SA')
 AD = config_handler.get_config_values('constants', 'AD')
+SQL_DB = config_handler.get_config_values('DATABASE', 'SQL_DB')
+
+cwd = os.getcwd()
+WORKING_DIRECTORY = os.path.join(cwd, "database")
+WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
+
 
 def class_dash():
 	if st.session_state.user['profile_id'] == SA:

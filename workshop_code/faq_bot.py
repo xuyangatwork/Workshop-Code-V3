@@ -8,10 +8,6 @@ import pandas as pd
 import cohere
 import ast
 
-cwd = os.getcwd()
-WORKING_DIRECTORY = os.path.join(cwd, "database")
-WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
-
 class ConfigHandler:
 	def __init__(self):
 		self.config = configparser.ConfigParser()
@@ -29,6 +25,11 @@ class ConfigHandler:
 config_handler = ConfigHandler()
 SA = config_handler.get_config_values('constants', 'SA')
 FAQ_BOT = config_handler.get_config_values('constants', 'FAQ_BOT')
+SQL_DB = config_handler.get_config_values('DATABASE', 'SQL_DB')
+
+cwd = os.getcwd()
+WORKING_DIRECTORY = os.path.join(cwd, "database")
+WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
 
 def clear_session_states():
 	st.session_state.msg = []

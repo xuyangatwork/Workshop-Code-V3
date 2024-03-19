@@ -175,8 +175,6 @@ def load_safa_session_states():
 def main():
 	try:
 		#initialize the application settings
-		load_mongo_db()
-
 		create_sql_db()
 		load_app_session_states()
 		initialise_admin_account()

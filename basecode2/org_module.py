@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import configparser
 import ast
+from basecode2.duck_db import initialise_duckdb, check_condition_value, insert_condition_value, get_value_by_condition
 from pymongo import MongoClient
 #from bson import ObjectId
 import time
@@ -55,6 +56,8 @@ def load_user_profile():
 
 def initialise_admin_account():
 	start_time = time.time()
+	#initialise_duckdb() if does not exist
+	initialise_duckdb()
 
 	if "s_collection" in st.session_state:
 		st.session_state.s_collection = None
@@ -75,27 +78,37 @@ def initialise_admin_account():
 	db = client[DATABASE_NAME]
 	st.session_state.s_collection = db["schools"]
 	st.session_state.u_collection = db["users"]
-	
-	super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
-	end_time = time.time()
-	# Calculate and print execution time
-	execution_time = end_time - start_time
-	st.write(f"Execution time: {execution_time} seconds")
- 
-	if super_admin_exists:
-		#st.success("Super admin account already exists!")
+	if check_condition_value(ALL_ORG, True):
+		end_time = time.time()
+		# Calculate and print execution time
+		execution_time = end_time - start_time
+		st.write(f"Execution time: {execution_time} seconds")
+
 		return
 	else:
-		st.session_state.u_collection.insert_one({
-				"username": st.secrets["super_admin_username"],
-				"user_id": 0,
-				"password": hash_password(st.secrets["super_admin_password"]), #hash_password(SUPER_PWD) 
-				"profile": SA,
-				"sch_name": ALL_ORG
-			})
-		st.success(f"Super Administrator created successfully!")
-
-
+		super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
+		if super_admin_exists:
+			# Update the condition value to True if the super admin exists
+			insert_condition_value(ALL_ORG, True)
+			end_time = time.time()
+			execution_time = end_time - start_time
+			st.write(f"Execution time: {execution_time} seconds")
+			return
+		else:
+			st.session_state.u_collection.insert_one({
+					"username": st.secrets["super_admin_username"],
+					"user_id": 0,
+					"password": hash_password(st.secrets["super_admin_password"]), #hash_password(SUPER_PWD) 
+					"profile": SA,
+					"sch_name": ALL_ORG
+				})
+			insert_condition_value(ALL_ORG, True)
+			end_time = time.time()
+			execution_time = end_time - start_time
+			st.write(f"Execution time: {execution_time} seconds")
+			st.success("Super Admin account created successfully.")
+			return
+   
 def sa_select_school():
 	documents = st.session_state.s_collection.find({}, { "sch_name": 1, "_id": 0 })
 	sch_names = [doc["sch_name"] for doc in documents]
@@ -666,36 +679,36 @@ def manage_teachers_school():
 		st.warning('You do not have the required permissions to perform this action')
 
 def fetch_my_students_from_class(teacher_username):
-    # Fetch the teacher's document
-    teacher_doc = st.session_state.u_collection.find_one({"username": teacher_username})
-    
-    # Fetch the teacher's school
-    sch_name = teacher_doc['sch_name']
+	# Fetch the teacher's document
+	teacher_doc = st.session_state.u_collection.find_one({"username": teacher_username})
+	
+	# Fetch the teacher's school
+	sch_name = teacher_doc['sch_name']
 
-    # Assuming the teacher might have multiple levels and classes assigned, let them choose
-    level_name = st.selectbox("Select Level", teacher_doc['level'])
-    class_name = st.selectbox("Select Class", teacher_doc['class'])
-    
-    # Once a level and class are selected, fetch all students in that class
-    if level_name and class_name:
-        students_cursor = st.session_state.u_collection.find(
-            {
-                "sch_name": sch_name,
-                "level": {"$in": [level_name]},  # Check if 'level_name' is in the list of levels
-                "class": {"$in": [class_name]},  # Check if 'class_name' is in the list of classes
-                "profile": STU  # Assuming "STU" is a constant representing the student profile
-            },
-            {"_id": 0, "username": 1}  # Project only the username
-        )
-        students = [student["username"] for student in students_cursor]
-        if not students:
-            st.warning("No students found for this class.")
-            return []
-        else:
-            return students
-    else:
-        # If level or class is not selected, return an empty list (or you may handle this case differently)
-        return []
+	# Assuming the teacher might have multiple levels and classes assigned, let them choose
+	level_name = st.selectbox("Select Level", teacher_doc['level'])
+	class_name = st.selectbox("Select Class", teacher_doc['class'])
+	
+	# Once a level and class are selected, fetch all students in that class
+	if level_name and class_name:
+		students_cursor = st.session_state.u_collection.find(
+			{
+				"sch_name": sch_name,
+				"level": {"$in": [level_name]},  # Check if 'level_name' is in the list of levels
+				"class": {"$in": [class_name]},  # Check if 'class_name' is in the list of classes
+				"profile": STU  # Assuming "STU" is a constant representing the student profile
+			},
+			{"_id": 0, "username": 1}  # Project only the username
+		)
+		students = [student["username"] for student in students_cursor]
+		if not students:
+			st.warning("No students found for this class.")
+			return []
+		else:
+			return students
+	else:
+		# If level or class is not selected, return an empty list (or you may handle this case differently)
+		return []
 
 def manage_teachers(sch_name):
 	st.subheader("Manage Teachers")

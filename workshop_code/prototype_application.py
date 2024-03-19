@@ -38,11 +38,12 @@ MY_FORM = config_handler.get_config_values('Prompt_Design_Templates', 'MY_FORM')
 MY_APP_ADVANCE = config_handler.get_config_values('Prompt_Design_Templates', 'MY_APP_ADVANCE')
 PROTOTYPE = config_handler.get_config_values('constants', 'PROTOTYPE')
 FORM_PROTOTYPE = config_handler.get_config_values('constants', 'FORM_PROTOTYPE')
+SQL_DB = config_handler.get_config_values('DATABASE', 'SQL_DB')
 
 def insert_into_data_table(date, chatbot_ans,user_prompt, tokens, function_name):
 	cwd = os.getcwd()
 	WORKING_DIRECTORY = os.path.join(cwd, "database")
-	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
+	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
 	conn = sqlite3.connect(WORKING_DATABASE)
 	cursor = conn.cursor()
 

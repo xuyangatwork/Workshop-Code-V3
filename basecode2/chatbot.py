@@ -46,6 +46,7 @@ STU = config_handler.get_config_values('constants', 'STU')
 DEFAULT_TEXT = config_handler.get_config_values('constants', 'DEFAULT_TEXT')
 CHATBOT = config_handler.get_config_values('constants', 'CHATBOT')
 SUMMARY_MODEL = config_handler.get_config_values('constants', 'SUMMARY_MODEL')
+SQL_DB = config_handler.get_config_values('DATABASE', 'SQL_DB')
 
 
 
@@ -76,7 +77,7 @@ def bot_settings():
 def insert_into_data_table(date, chatbot_ans,user_prompt, tokens, function_name):
 	cwd = os.getcwd()
 	WORKING_DIRECTORY = os.path.join(cwd, "database")
-	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
+	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
 	conn = sqlite3.connect(WORKING_DATABASE)
 	cursor = conn.cursor()
 

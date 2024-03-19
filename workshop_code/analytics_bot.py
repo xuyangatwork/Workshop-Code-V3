@@ -33,10 +33,11 @@ class ConfigHandler:
 # Initialization
 config_handler = ConfigHandler()
 RAG_BOT = config_handler.get_value('constants', 'RAG_BOT')
+SQL_DB = config_handler.get_value('DATABASE', 'SQL_DB')
 
 cwd = os.getcwd()
 WORKING_DIRECTORY = os.path.join(cwd, "database")
-WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
+WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
 
 
 

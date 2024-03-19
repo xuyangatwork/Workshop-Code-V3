@@ -1,15 +1,33 @@
 import sqlite3
 import streamlit as st
 import os
+import configparser
+import ast
 #clear no error in creating schema
 
 # Create or check for the 'database' directory in the current working directory
+class ConfigHandler:
+	def __init__(self):
+		self.config = configparser.ConfigParser()
+		self.config.read('config.ini')
 
+	def get_value(self, section, key):
+		value = self.config.get(section, key)
+		try:
+			# Convert string value to a Python data structure
+			return ast.literal_eval(value)
+		except (SyntaxError, ValueError):
+			# If not a data structure, return the plain string
+			return value
+
+# Initialization
+config_handler = ConfigHandler()
+SQL_DB = config_handler.get_value('DATABASE', 'SQL_DB')
 	
 def create_sql_db():
     cwd = os.getcwd()
     WORKING_DIRECTORY = os.path.join(cwd, "database")
-    WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , "default.db")
+    WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
 
     if not os.path.exists(WORKING_DIRECTORY):
         os.makedirs(WORKING_DIRECTORY)
