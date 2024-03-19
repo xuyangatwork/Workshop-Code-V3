@@ -75,12 +75,13 @@ def initialise_admin_account():
 	db = client[DATABASE_NAME]
 	st.session_state.s_collection = db["schools"]
 	st.session_state.u_collection = db["users"]
+	
+	super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
 	end_time = time.time()
 	# Calculate and print execution time
 	execution_time = end_time - start_time
 	st.write(f"Execution time: {execution_time} seconds")
-	super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
-	
+ 
 	if super_admin_exists:
 		#st.success("Super admin account already exists!")
 		return
