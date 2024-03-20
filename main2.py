@@ -300,7 +300,7 @@ def main():
 				if ack:
 					st.session_state.acknowledgement = True
 					set_function_access_for_user()
-					#load_app_settings("prompt_templates", PROMPT_CONFIG)
+					load_app_settings("prompt_templates", PROMPT_CONFIG)
 					load_app_settings("app_settings", APP_CONFIG)
 					st.session_state.start = 1
 					st.rerun()
