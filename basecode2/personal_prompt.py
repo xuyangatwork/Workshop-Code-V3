@@ -171,10 +171,10 @@ def perform_modification_and_update_session_state(action, field, new_key, new_va
 def manage_prompt_templates():
 	if "current_prompt" not in st.session_state:
 		st.session_state.current_prompt = "School Prompt Templates"
-	st.write(f"### :green[Current Prompt Templates: {st.session_state.current_prompt}")
+	st.write(f"### :green[Current Prompt Templates: {st.session_state.current_prompt}]")
 	prompt_select = st.selectbox("Select Prompt Templates", ["School Prompt Templates", "Personal Prompt Templates"])
 	if prompt_select == "School Prompt Templates":
-		st.session_state.current_prompt = prompt_select
+		#st.session_state.current_prompt = prompt_select
 		excluded_fields = ['_id', 'sch_name']
 		doc = load_document(st.session_state.user['school_id'], "prompt_templates", PROMPT_CONFIG)
 		doc_for_df = {k: v for k, v in doc.items() if k not in excluded_fields}
@@ -185,17 +185,24 @@ def manage_prompt_templates():
 			st.error("No prompt_templates settings found")
 			return False
 			# Initialize session state for each field in the document, excluding certain fields
-		for key, value in doc.items():
-			if key not in st.session_state and key not in excluded_fields:
-				session_key = key.replace(" ", "_").lower()
-				st.session_state[session_key] = value
-		for key in doc.keys():
-			if key not in excluded_fields:
-				session_key = key.replace(" ", "_").lower()
-				st.session_state[session_key] = doc[key]
+		if st.button("Load School Prompt Templates"):
+			st.session_state.current_prompt = prompt_select
+			for key, value in doc.items():
+				if key not in st.session_state and key not in excluded_fields:
+					session_key = key.replace(" ", "_").lower()
+					st.session_state[session_key] = value
+			for key in doc.keys():
+				if key not in excluded_fields:
+					session_key = key.replace(" ", "_").lower()
+					st.session_state[session_key] = doc[key]
+			st.success("School Prompt Templates loaded successfully")
+			#st.rerun()
+			return True
+	
 	else:
 		doc = load_document(st.session_state.user['id'], "prompt_templates", PROMPT_CONFIG)
-		st.session_state.current_prompt = prompt_select
+		#st.session_state.current_prompt = prompt_select
+		excluded_fields = ['_id', 'username']
 		doc_for_df = {k: v for k, v in doc.items() if k not in excluded_fields}
 		st.session_state.app_pdf = pd.DataFrame(list(doc_for_df.items()), columns=['Field', 'Values'])
 		st.write("Current Settings : ", "prompt_templates")
@@ -204,13 +211,17 @@ def manage_prompt_templates():
 			st.error("No prompt_templates settings found")
 			return False
 			# Initialize session state for each field in the document, excluding certain fields
-		for key, value in doc.items():
-			if key not in st.session_state and key not in excluded_fields:
-				session_key = key.replace(" ", "_").lower()
-				st.session_state[session_key] = value
-    
-		for key in doc.keys():
-				if key not in excluded_fields:
+		if st.button("Load Personal Prompt Templates"):
+			st.session_state.current_prompt = prompt_select
+			for key, value in doc.items():
+				if key not in st.session_state and key not in excluded_fields:
 					session_key = key.replace(" ", "_").lower()
-					st.session_state[session_key] = doc[key]
+					st.session_state[session_key] = value
+		
+			for key in doc.keys():
+					if key not in excluded_fields:
+						session_key = key.replace(" ", "_").lower()
+						st.session_state[session_key] = doc[key]
+			st.success("Personal Prompt Templates loaded successfully")
+			return True
 			

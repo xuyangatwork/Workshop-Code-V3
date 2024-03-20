@@ -6,7 +6,7 @@ import streamlit_antd_components as sac
 from basecode2.app_management import load_app_settings, load_sa_app_settings
 from basecode2.authenticate import login_function
 #from basecode2.prompt_module import manage_prompt_org
-from basecode2.personal_prompt import set_prompt_settings
+from basecode2.personal_prompt import set_prompt_settings, manage_prompt_templates
 from basecode2.rag_mongodb import rag_creator_mongodb
 from basecode2.app_management import set_app_settings, delete_app_settings
 from basecode2.org_module import (
@@ -40,6 +40,7 @@ import configparser
 import os
 import ast
 import ssl
+import time
 			  
 try:
 	_create_unverified_https_context = ssl._create_unverified_context
@@ -179,6 +180,7 @@ def main():
 	try:
 		#initialize the application settings
 		create_sql_db()
+		start_time = time.time()
 		load_app_session_states()
 		initialise_admin_account()
 		st.title(st.session_state.title_page)
@@ -379,6 +381,8 @@ def main():
 		elif st.session_state.option == 'Prompt Management':
 			st.subheader(f":green[{st.session_state.option}]")
 			set_prompt_settings()
+			st.divider()
+			manage_prompt_templates()
 		#workshop tools
 		
 			
@@ -456,7 +460,11 @@ def main():
 			for key in st.session_state.keys():
 				del st.session_state[key]
 			st.rerun()
-	
+   
+		end_time = time.time()
+		execution_time = end_time - start_time
+		st.write(f"Execution time: {execution_time} seconds")
+
 					
 	except Exception as e:
 		st.exception(e)

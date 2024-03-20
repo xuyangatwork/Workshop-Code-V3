@@ -1,26 +1,16 @@
 import streamlit as st
-from basecode2.org_module import sa_select_school
 from basecode2.rag_mongodb import load_rag
-from langchain_community.vectorstores import FAISS
-from basecode2.prompt_module import display_prompts, select_and_set_prompt, set_default_template
-import pandas as pd
 import configparser
 import ast
-from pymongo import MongoClient
 import streamlit as st
-import openai
 from openai import OpenAI
 import sqlite3
 from basecode2.authenticate import return_openai_key, return_claude_key
 from datetime import datetime
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
 import streamlit_antd_components as sac
 import os
 from Markdown2docx import Markdown2docx
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 import anthropic
 
 
@@ -309,6 +299,8 @@ def claude_bot(bot_name, c_model, memory_flag, rag_flag):
 			num_tokens = len(response_str + prompt_str) * 1.3
 			#st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  response_str, prompt_str, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(response)
 			
 	except Exception as e:
 		st.exception(e)
@@ -337,15 +329,7 @@ def main_chatbot_functions():
 		with c1:
 			memory = st.checkbox("Memory Enabled", value=True)
 			rag = st.checkbox("RAG Enabled", value=True)
-			if st.session_state.user['profile_id'] == STU:
-				set_default_template(DEFAULT_TEXT)
-			else:
-				chat_bot = st.selectbox("Select Chatbot", ["gpt-4-turbo-preview", "gpt-3.5-turbo"])	
-				prompt_templates = display_prompts()
-				if st.checkbox("Select Prompt", value=False):
-					if prompt_templates:
-						select_and_set_prompt(prompt_templates, True)
-		
+			chat_bot = st.selectbox("OpenAI model", ["gpt-4-turbo-preview", "gpt-3.5-turbo"])
 		with c2:
 			if rag:
 				st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
@@ -363,6 +347,7 @@ def main_chatbot_functions():
 						st.rerun()
 			#show the templates for chatbot
 	with st.expander("Download Chatbot Responses"):
+		st.session_state.download_response_flag = st.checkbox("Enable Download Responses")
 		complete_my_lesson()
 	
 	b1, b2 = st.columns([3,1])

@@ -55,7 +55,7 @@ def load_user_profile():
 		return False
 
 def initialise_admin_account():
-	start_time = time.time()
+	
 	#initialise_duckdb() if does not exist
 	initialise_duckdb()
 
@@ -79,20 +79,12 @@ def initialise_admin_account():
 	st.session_state.s_collection = db["schools"]
 	st.session_state.u_collection = db["users"]
 	if check_condition_value(ALL_ORG, True):
-		end_time = time.time()
-		# Calculate and print execution time
-		execution_time = end_time - start_time
-		st.write(f"Execution time: {execution_time} seconds")
-
 		return
 	else:
 		super_admin_exists = st.session_state.u_collection.find_one({"username": st.secrets["super_admin_username"]})
 		if super_admin_exists:
 			# Update the condition value to True if the super admin exists
 			insert_condition_value(ALL_ORG, True)
-			end_time = time.time()
-			execution_time = end_time - start_time
-			st.write(f"Execution time: {execution_time} seconds")
 			return
 		else:
 			st.session_state.u_collection.insert_one({
@@ -103,10 +95,6 @@ def initialise_admin_account():
 					"sch_name": ALL_ORG
 				})
 			insert_condition_value(ALL_ORG, True)
-			end_time = time.time()
-			execution_time = end_time - start_time
-			st.write(f"Execution time: {execution_time} seconds")
-			st.success("Super Admin account created successfully.")
 			return
    
 def sa_select_school():

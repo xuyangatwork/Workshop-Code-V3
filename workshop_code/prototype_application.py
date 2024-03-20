@@ -4,6 +4,7 @@ from datetime import datetime
 import sqlite3
 import openai
 from openai import OpenAI
+import streamlit_antd_components as sac
 import os
 from basecode2.authenticate import return_cohere_key, return_openai_key, return_google_key, return_claude_key
 from datetime import datetime
@@ -16,6 +17,7 @@ import google.generativeai as genai
 import ast
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 import anthropic
+from basecode2.chatbot import complete_my_lesson
 
 
 class ConfigHandler:
@@ -39,6 +41,8 @@ MY_APP_ADVANCE = config_handler.get_config_values('Prompt_Design_Templates', 'MY
 PROTOTYPE = config_handler.get_config_values('constants', 'PROTOTYPE')
 FORM_PROTOTYPE = config_handler.get_config_values('constants', 'FORM_PROTOTYPE')
 SQL_DB = config_handler.get_config_values('DATABASE', 'SQL_DB')
+
+
 
 def insert_into_data_table(date, chatbot_ans,user_prompt, tokens, function_name):
 	cwd = os.getcwd()
@@ -242,7 +246,10 @@ def prototype_settings():
 	with tab1:
 		st.subheader("Chatbot Prompt Settings")
 		advance_prompt_template_settings()
-		
+		with st.expander("Download Chatbot Responses"):
+			st.session_state.download_response_flag = st.checkbox("Enable Download Responses")
+			complete_my_lesson()
+			
 	with tab2:
 		st.subheader("Chatbot Parameter Settings")
 		if "prototype_model" not in st.session_state:
@@ -298,6 +305,17 @@ def prompt_template_prototype(prompt):
 	prompt = advance_prompt_template(mem, source, resource)
 	
 	return prompt
+
+def add_response(response):
+	# add_response = sac.buttons([sac.ButtonsItem(label='Ignore Response', icon='plus-circle', color='#40826D'), [sac.ButtonsItem(label='Add Response', icon='plus-circle', color='#25C3B0')]
+	# 							], index=None, format_func='title', size='small',type='primary')
+	opt = sac.buttons([sac.ButtonsItem(label='Save Response', color='#40826D')], format_func='title', index=None, size='small')
+	
+	# st.write(response)
+	if add_response:
+		st.session_state.data_doc = st.session_state.data_doc + "\n\n" + response
+	
+	return opt
 
 
 #chat completion memory for streamlit using memory buffer
@@ -360,6 +378,8 @@ def prototype_advance_bot(bot_name= PROTOTYPE):
 			num_tokens = len(full_response + prompt)*1.3
 			#st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(full_response)
 			
 	except Exception as e:
 		st.exception(e)
@@ -423,6 +443,8 @@ def prototype_gemini_bot(bot_name= PROTOTYPE):
 			num_tokens = len(full_response_str + prompt_str) * 1.3
 			#st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response_str, prompt_str, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(full_response)
 			
 	except Exception as e:
 		st.exception(e)
@@ -476,6 +498,8 @@ def prototype_claude_bot(bot_name= PROTOTYPE):
 			num_tokens = len(response_str + prompt_str) * 1.3
 			#st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  response_str, prompt_str, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(response)
 			
 	except Exception as e:
 		st.exception(e)
@@ -540,6 +564,8 @@ def prototype_cohere_bot(bot_name= PROTOTYPE):
 			num_tokens = len(full_response + prompt)*1.3
 			#st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(full_response)
 			
 	except Exception as e:
 		st.exception(e)
@@ -592,6 +618,8 @@ def basic_bot(prompt, bot_name= "Prototype"):
 			num_tokens = len(full_response + prompt)*1.3
 			# #st.write(num_tokens)
 			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			if st.session_state.download_response_flag == True:
+				st.session_state.chat_response = add_response(full_response)
 			
 	except Exception as e:
 		st.error(e)
