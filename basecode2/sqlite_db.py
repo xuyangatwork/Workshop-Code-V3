@@ -28,9 +28,6 @@ def create_sql_db():
     cwd = os.getcwd()
     WORKING_DIRECTORY = os.path.join(cwd, "database")
     WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
-
-    if not os.path.exists(WORKING_DIRECTORY):
-        os.makedirs(WORKING_DIRECTORY)
     
     conn = sqlite3.connect(WORKING_DATABASE)
     cursor = conn.cursor()
