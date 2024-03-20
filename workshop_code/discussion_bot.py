@@ -2,7 +2,6 @@ import streamlit as st
 from openai import OpenAI
 import sqlite3
 from basecode2.authenticate import return_openai_key
-from basecode2.prompt_module import fetch_and_create_session_states
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.chat_models import ChatOpenAI
 import configparser

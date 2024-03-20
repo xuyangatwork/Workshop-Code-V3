@@ -50,17 +50,6 @@ def class_dash():
 				# if action == 'All':
 					data, columns = fetch_data_by_school(school)
 					display_data(data, columns)
-				# elif action == 'By Function':
-				# 	func = st.text_input("Enter function name")
-				# 	if st.button("Show data"):
-				# 		data, columns = fetch_data_by_function(func)
-				# 		display_data(data, columns)
-				# elif action == 'By Username':
-				# 	username = st.text_input("Enter username")
-				# 	if st.button("Show data"):
-				# 		data, columns = fetch_data_by_username(username)
-				# 		display_data(data, columns)
-	
 
 	elif st.session_state.user['profile_id'] == AD:
 		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")

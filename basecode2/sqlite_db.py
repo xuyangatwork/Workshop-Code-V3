@@ -48,7 +48,7 @@ def create_sql_db():
 	)
 	
 	''')
-
+#not in use if you are not running the workshop
 	cursor.execute('''
 	CREATE TABLE IF NOT EXISTS Chatbot_Training_Records (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

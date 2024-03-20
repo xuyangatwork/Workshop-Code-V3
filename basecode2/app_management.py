@@ -55,7 +55,7 @@ def load_document(sch_name, field_name=None, dict_input=None):
 	if not document and field_name and dict_input is not None:
 		new_document = {"sch_name": sch_name, field_name: dict_input}
 		st.session_state.a_collection.insert_one(new_document)
-		st.write(f"Added {field_name} to {sch_name} settings for the first time")
+		#st.write(f"Added {field_name} to {sch_name} settings for the first time")
 		return dict_input  # Return the newly added data
 
 	# If the document exists but doesn't contain the field_name, handle the missing key
@@ -66,14 +66,14 @@ def load_document(sch_name, field_name=None, dict_input=None):
 				{"sch_name": sch_name},
 				{"$set": {field_name: dict_input}}
 			)
-			st.write(f"Added {field_name} to {sch_name} settings")
+			#st.write(f"Added {field_name} to {sch_name} settings")
 			return dict_input  # Return the newly added data
 		else:
 			# If dict_input is not provided, just return None or a default value
 			return None
 
 	# If the document and field_name exist, return its value
-	st.write(f"Loaded {field_name} from {sch_name} settings")
+	#st.write(f"Loaded {field_name} from {sch_name} settings")
 	return document.get(field_name)
 
 
@@ -92,7 +92,7 @@ def load_app_settings(field_name, dict): #load_prompt setting
 		if key not in st.session_state and key not in excluded_fields:
 			session_key = key.replace(" ", "_").lower()
 			st.session_state[session_key] = value
-			print(key, value)
+			#print(key, value)
 	return True
 		#load all app settings flag to true
 
@@ -118,7 +118,7 @@ def load_sa_app_settings():
 				if key not in st.session_state and key not in excluded_fields:
 					session_key = key.replace(" ", "_").lower()
 					st.session_state[session_key] = value
-					st.write(key, value)
+					#st.write(key, value)
 			st.success(f"{school} settings loaded successfully")
 			return True	
 
@@ -199,55 +199,4 @@ def perform_modification_and_update_session_state(action, field, new_key, new_va
 			st.session_state[session_key] = updated_doc[key]
 	
 	
-
-
-# def set_app_settings():
-#     initialize_app_settings()
-#     if "app_pdf" not in st.session_state:
-#         st.session_state.app_pdf = None
-#     if st.session_state.user['profile_id'] == SA:
-#         sch_names = sa_select_school()
-#         school = st.selectbox('Select School', sch_names, key='app_school')
-#         field_name = st.selectbox('Select Field', APP_SETTINGS_LIST, key='app_field')
-#         if field_name == "prompt_templates":
-#             dict_input = PROMPT_CONFIG
-#         else:
-#             dict_input = APP_CONFIG
-#         excluded_fields = ['_id', 'sch_name']
-#         if school:
-#             doc = load_document(school, field_name, dict_input)
-#             for key, value in doc.items():
-#                 if key not in st.session_state and key not in excluded_fields:
-#                     st.session_state[key] = value
-
-#             doc_for_df = {k: v for k, v in doc.items() if k not in excluded_fields}
-#             st.session_state.app_pdf = pd.DataFrame(list(doc_for_df.items()), columns=['Field', 'Values'])
-#             st.write("Current Settings : ", field_name)
-#             st.dataframe(st.session_state.app_pdf)
-
-#             action = st.selectbox("Select Action", ["Edit", "Add", "Remove"], key='app_edit_action')
-#             new_key = ""
-#             new_value = ""
-#             field = ""
-#             if action == "Add":
-#                 new_key = st.text_input("Enter new key", key='app_new_key')
-#                 new_value = st.text_area("Enter new value", key='app_new_value', height=500)
-#             else: # For Edit and Remove actions
-#                 field = st.selectbox("Select field", ["-"] + st.session_state.app_pdf['Field'].tolist(), key='app_action')
-#                 if action == "Edit" and field != "-":
-#                     existing_value = st.session_state.app_pdf.loc[st.session_state.app_pdf['Field'] == field, 'Values'].iloc[0]
-#                     new_value = st.text_area("Enter new value", value=existing_value, key='app_edit_value', height=500)
-
-#             if st.button("Submit Action"):
-#                 if action == "Add" and new_key: # Add new field
-#                     new_row = pd.DataFrame([[new_key, new_value]], columns=['Field', 'Values'])
-#                     st.session_state.app_pdf = pd.concat([st.session_state.app_pdf, new_row], ignore_index=True)
-#                 elif action == "Edit" and field and field != "-": # Edit existing field
-#                     st.session_state.app_pdf.loc[st.session_state.app_pdf['Field'] == field, 'Values'] = new_value
-#                 elif action == "Remove" and field and field != "-": # Remove a field
-#                     st.session_state.app_pdf = st.session_state.app_pdf[st.session_state.app_pdf['Field'] != field]
-
-#                 updated_doc = {row['Field']: row['Values'] for index, row in st.session_state.app_pdf.iterrows()}
-#                 st.session_state.a_collection.update_one({"sch_name": school}, {"$set": updated_doc})
-#                 st.write("Action completed successfully.")
 

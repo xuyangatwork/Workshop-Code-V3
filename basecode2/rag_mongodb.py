@@ -224,6 +224,7 @@ def create_rag_mongodb(var,school_flag):
 				index_document = {
 					'name': new_rag,
 					'description': description,
+					'school': st.session_state.user['school_id'],
 					'sharing': sharing,
 					'owner': var,
 					'rag_data': pkl
@@ -261,7 +262,16 @@ def list_rags_for_owner(db_collection, owner):
 	rag_names = [doc['name'] for doc in documents]
 	return rag_names
 
-
+def list_rags_for_shareable(db_collection, school):
+    # Query the database for documents with the specified owner, where sharing is True and school matches the provided argument
+    query = {
+        'sharing': True,
+        'school': school
+    }
+    documents = db_collection.find(query)
+    # Collect the 'name' (RAG name) from each document
+    rag_names = [doc['name'] for doc in documents]
+    return rag_names
 
 def sch_check_and_get_rag_list(sch_name):
 	school_doc = st.session_state.s_collection.find_one({"sch_name": sch_name},{"rag_list": 1})
@@ -352,6 +362,8 @@ def load_rag():
 			st.write("School RAG Display")
 			display_documents_as_dataframe(st.session_state.user['school_id'])
 			rag_list = list_rags_for_owner(st.session_state.r_collection, st.session_state.user['school_id'])
+			share_list = list_rags_for_shareable(st.session_state.r_collection, st.session_state.user['school_id'])
+			rag_list = share_list + rag_list
 			if rag_list == []:
 				st.error("No RAGs found.")
 			else:

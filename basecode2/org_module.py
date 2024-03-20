@@ -2,6 +2,7 @@ from basecode2.authenticate import hash_password
 import streamlit as st
 import pandas as pd
 import configparser
+import streamlit_antd_components as sac
 import ast
 from basecode2.duck_db import initialise_duckdb, check_condition_value, insert_condition_value, get_value_by_condition
 from pymongo import MongoClient
@@ -172,13 +173,90 @@ def edit_user(username, new_password=None, new_profile=None):
 		st.warning("No changes specified.")
 
 
+def fetch_usernames_for_school(school_name):
+	"""Fetch usernames for all users in a specific school."""
+	# Assuming st.session_state.u_collection is your user collection in MongoDB
+	users = st.session_state.u_collection.find({"sch_name": school_name}, {"username": 1})
+	usernames = [user['username'] for user in users]
+	return usernames
+
+def delete_selected_users(usernames):
+	"""Delete selected users."""
+	for username in usernames:
+		remove_user(username)
+
 def remove_user(username):
 	"""Remove a user from the database."""
 	result = st.session_state.u_collection.delete_one({"username": username})
 	if result.deleted_count > 0:
 		st.success(f"User '{username}' removed successfully.")
 	else:
-		st.error("Failed to remove the user. Please check the username.")
+		st.error(f"Failed to remove the user '{username}'. Please check the username.")
+
+def main_delete_users(school_name):
+	"""Main function to delete users from a specific school."""
+	usernames = fetch_usernames_for_school(school_name)
+	
+	if not usernames:
+		st.warning(f"No users found for {school_name}.")
+		return
+	action = st.selectbox('Select Action', ['Delete All Users', 'Delete Users by ID Range', 'Delete Selected Users'], key='delete_action')
+	if action == 'Delete All Users':
+		if st.checkbox("Confirm Deletion"):
+			result = st.session_state.u_collection.delete_many({"sch_name": school_name})
+			if result.deleted_count > 0:
+				st.success(f"Deleted {result.deleted_count} users successfully.")
+			else:
+				st.warning("No users found to delete.")
+	elif action == 'Delete Users by ID Range':
+		users = fetch_usersid_for_school(school_name)
+		lowid, highid = fetch_lowest_highest_user_id_for_school(users)
+		st.write(f"Lowest User ID: {lowid}")
+		st.write(f"Highest User ID: {highid}")
+		start_id = st.number_input("Start User ID", min_value=0, value=lowid, step=1, key="start_id")
+		end_id = st.number_input("End User ID", min_value=0, value=highid, step=1, key="end_id")
+		if st.button("Delete Users by ID Range"):
+			if start_id > end_id:
+				st.error("Start ID cannot be greater than End ID.")
+			else:
+				delete_users_by_id_range(school_name, start_id, end_id)
+	elif action == 'Delete Selected Users':
+		selected_usernames = st.multiselect("Select users to delete:", options=usernames)
+		
+		if st.button("Delete Selected Users"):
+			if selected_usernames:
+				delete_selected_users(selected_usernames)
+			else:
+				st.error("Please select at least one user to delete.")
+
+def fetch_lowest_highest_user_id_for_school(users):
+	#st.write(users)
+	"""Determine the lowest and highest user_id for users from a specific school."""
+	user_ids = [user['user_id'] for user in users]
+	lowest_id = min(user_ids)
+	highest_id = max(user_ids)
+	return lowest_id, highest_id
+
+def fetch_usersid_for_school(school_name):
+	"""Fetch users for a specific school."""
+	# Assuming 'users' is your MongoDB collection
+	users = list(st.session_state.u_collection.find({"sch_name": school_name}, {"user_id": 1}))
+	return users
+
+def delete_users_by_id_range(school_name, start_id, end_id):
+	"""Delete users within a specified user_id range and school."""
+	# Assuming 'users' is your MongoDB collection
+	result = st.session_state.u_collection.delete_many({
+		"sch_name": school_name,
+		"user_id": {"$gte": start_id, "$lte": end_id}
+	})
+	if result.deleted_count > 0:
+		st.success(f"Deleted {result.deleted_count} users successfully.")
+	else:
+		st.error("No users deleted. Please check the ID range and school name.")
+
+
+
 
 def fetch_users_for_school(school_name):
 	"""
@@ -305,9 +383,7 @@ def setup_users():
 		if action == 'Edit User':
 			setup_mass_edit_users(school)
 		elif action == 'Remove User':
-			remove_username = st.text_input("Enter Username", max_chars=20)
-			if st.button("Remove User"):
-				remove_user(remove_username)
+			main_delete_users(school)
 		elif action == 'Create Users':# Step 1: Create a copy of the SCH_PROFILES list to avoid modifying the original
 				sch_profiles_copy = SCH_PROFILES.copy()
 				# Step 2: Remove "No Profile" from the copy if it exists
@@ -335,9 +411,7 @@ def setup_users():
 		if action == 'Edit User':
 			setup_mass_edit_users(school)
 		elif action == 'Remove User':
-			remove_username = st.text_input("Enter Username", max_chars=20)
-			if st.button("Remove User"):
-				remove_user(remove_username)
+			main_delete_users(school)
 		elif action == 'Create Users':
 		
 				num_users = st.number_input("Number of Users to Create", min_value=1, value=1, step=1)
@@ -481,13 +555,128 @@ def manage_organisation():
 	if st.session_state.user['profile_id'] == SA:
 		sch_names = sa_select_school()
 		school = st.selectbox('Select School', sch_names, key='m_school')
+  
 		st.write(f":green[School Selected: {school}]")
+		sch_doc = st.session_state.s_collection.find_one({"sch_name": school})
+		if sch_doc:
+			c1, c2 = st.columns([1, 3])
+			with c1:
+				generate_school_structure(sch_doc)
 		manage_levels_classes(school)
 	elif st.session_state.user['profile_id'] == AD:
 		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
+		sch_doc = st.session_state.s_collection.find_one({"sch_name": st.session_state.user['sch_name']})
+		if sch_doc:
+			c1, c2 = st.columns([1, 3])
+			with c1:
+				generate_school_structure(sch_doc)
 		manage_levels_classes(st.session_state.user['sch_name'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
+
+
+# def generate_school_structure(sch_doc):
+#     levels = [key for key in sch_doc.keys() if key.startswith('lvl_')]
+#     school_items = []
+
+#     for level in levels:
+#         class_items = [sac.TreeItem(class_name) for class_name in sch_doc[level]]
+#         level_item = sac.TreeItem(level, children=class_items)
+#         school_items.append(level_item)
+
+#     # Add other roles if necessary, for example, Teachers, Students, Administrators
+#     # You can modify the below code to include them as needed
+#     teacher_item = sac.TreeItem('Teacher', children=[sac.TreeItem(name) for name in sch_doc.get('Teacher', {})])
+#     student_item = sac.TreeItem('Student', children=[sac.TreeItem(name) for name in sch_doc.get('Student', {})])
+#     administrator_item = sac.TreeItem('Administrator', children=[sac.TreeItem(name) for name in sch_doc.get('Administrator', {})])
+
+#     school_items.extend([teacher_item, student_item, administrator_item])
+
+#     return sac.tree(items=school_items, label=sch_doc['sch_name'], index=0, align='center', size='md', icon='school', open_all=True, checkbox=True)
+
+def generate_school_structure(sch_doc):
+	# Identify all keys in the document that represent school levels, assuming they start with 'lvl_'
+	levels = [key for key in sch_doc.keys() if key.startswith('lvl_')]
+	school_items = []
+
+	# Iterate through each level, creating TreeItem objects for each class within the level
+	for level in levels:
+		# Create TreeItem objects for each class in the current level
+		class_items = [sac.TreeItem(class_name) for class_name in sch_doc[level]]
+		# Create a TreeItem for the level itself, with the classes as its children
+		level_item = sac.TreeItem(level, children=class_items)
+		school_items.append(level_item)
+
+	# Return the sac.tree() component with the school_items as its structure
+	# Adjust label, align, size, and icon as per your requirements
+	return sac.tree(items=school_items, label=sch_doc['sch_name'], index=0, align='center', size='md', icon='school', open_all=True, checkbox=True)
+
+
+
+def generate_full_structure(sch_name, s_collection, u_collection):
+	# Fetch the school document
+	sch_doc = s_collection.find_one({"sch_name": sch_name})
+
+	# Fetch teachers and students from the unified user collection
+	teachers = list(u_collection.find({"profile": TCH, "sch_name": sch_name}))
+	students = list(u_collection.find({"profile": STU, "sch_name": sch_name}))
+
+	# Initialize the mapping dictionary
+	class_teacher_student_map = {}
+
+	# Process teachers
+	for teacher in teachers:
+		# Using .get to avoid KeyError if 'level' or 'class' are missing, defaulting to empty lists
+		levels = teacher.get('level', [])
+		classes = teacher.get('class', [])
+		for level, class_name in zip(levels, classes):
+			key = (level, class_name)
+			if key not in class_teacher_student_map:
+				class_teacher_student_map[key] = {'teachers': [], 'students': []}
+			class_teacher_student_map[key]['teachers'].append(teacher['username'])
+
+	# Process students
+	for student in students:
+		# Using .get to safely access 'level' and 'class', defaulting to None if they are missing
+		level = student.get('level')
+		class_name = student.get('class')
+		if level is not None and class_name is not None:
+			key = (level, class_name)
+			if key in class_teacher_student_map:
+				class_teacher_student_map[key]['students'].append(student['username'])
+			else:
+				# Handling the case where the student is assigned to a class that hasn't been mapped yet
+				# This situation might need further review to ensure data consistency
+				class_teacher_student_map[key] = {'teachers': [], 'students': [student['username']]}
+
+			
+	#st.write(class_teacher_student_map)
+	# Build the tree structure
+	school_items = []
+	levels = [key for key in sch_doc.keys() if key.startswith('lvl_')]
+
+	for level in levels:
+		class_items = []
+		for class_name in sch_doc[level]:
+			# Create sub-items for teachers and students of the class
+			teachers_students_items = []
+			key = (level, class_name)
+			if key in class_teacher_student_map:
+				for teacher in class_teacher_student_map[key]['teachers']:
+					teachers_students_items.append(sac.TreeItem(f"Teacher: {teacher}"))
+				for student in class_teacher_student_map[key]['students']:
+					teachers_students_items.append(sac.TreeItem(f"Student: {student}"))
+
+			# Add the class item with its teachers and students as children
+			class_item = sac.TreeItem(class_name, children=teachers_students_items)
+			class_items.append(class_item)
+
+		# Add the level item with its classes as children
+		level_item = sac.TreeItem(level, children=class_items)
+		school_items.append(level_item)
+
+	return sac.tree(items=school_items, label=sch_name, index=0, align='center', size='md', icon='school', open_all=True, checkbox=True)
+
 
 
 def manage_levels_classes(sch_name):
@@ -658,11 +847,17 @@ def manage_teachers_school():
 		school = st.selectbox('Select School', sch_names, key='add_teacher_school')
 		st.write(f":green[School Selected: {school}]")
 		if school:
+			c1, c2 = st.columns([1, 3])
+			with c1:
+				generate_full_structure(school, st.session_state.s_collection, st.session_state.u_collection)
 			manage_teachers(school)
 		else:
 			st.warning("Please select a school first.")
 	elif st.session_state.user['profile_id'] == AD:
 		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
+		c1, c2 = st.columns([1, 3])
+		with c1:
+			generate_full_structure(st.session_state.user['sch_name'], st.session_state.s_collection, st.session_state.u_collection)
 		manage_teachers(st.session_state.user['sch_name'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
@@ -893,11 +1088,17 @@ def manage_students_school():
 		school = st.selectbox('Select School', sch_names, key='add_student_school')
 		st.write(f":green[School Selected: {school}]")
 		if school:
+			c1, c2 = st.columns([1, 3])
+			with c1:
+				generate_full_structure(school, st.session_state.s_collection, st.session_state.u_collection)
 			manage_students(school)
 		else:
 			st.warning("Please select a school first.")
 	elif st.session_state.user['profile_id'] == AD:
 		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
+		c1, c2 = st.columns([1, 3])
+		with c1:
+			generate_full_structure(st.session_state.user['sch_name'], st.session_state.s_collection, st.session_state.u_collection)
 		manage_students(st.session_state.user['sch_name'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')

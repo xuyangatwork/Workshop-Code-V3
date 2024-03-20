@@ -5,7 +5,6 @@ from streamlit_antd_components import menu, MenuItem
 import streamlit_antd_components as sac
 from basecode2.app_management import load_app_settings, load_sa_app_settings
 from basecode2.authenticate import login_function
-#from basecode2.prompt_module import manage_prompt_org
 from basecode2.personal_prompt import set_prompt_settings, manage_prompt_templates
 from basecode2.rag_mongodb import rag_creator_mongodb
 from basecode2.app_management import set_app_settings, delete_app_settings
@@ -19,7 +18,8 @@ from basecode2.org_module import (
 	set_function_access_for_user, 
 	sa_delete_profile_from_school,
 	manage_students_school,
-	manage_teachers_school
+	manage_teachers_school,
+	generate_full_structure
 	)
 from basecode2.sqlite_db import create_sql_db
 from basecode2.chatbot import main_chatbot_functions
@@ -180,7 +180,7 @@ def main():
 	try:
 		#initialize the application settings
 		create_sql_db()
-		start_time = time.time()
+		#start_time = time.time()
 		load_app_session_states()
 		initialise_admin_account()
 		st.title(st.session_state.title_page)
@@ -412,6 +412,7 @@ def main():
 					st.divider()
 					sa_delete_profile_from_school()
 				elif steps_options == "User Assignments":
+	
 					#select teachers or students
 					action = st.selectbox("Select action", ["Select", "Manage Teachers", "Manage Students"])
 					if action == "Manage Teachers":
@@ -461,9 +462,9 @@ def main():
 				del st.session_state[key]
 			st.rerun()
    
-		end_time = time.time()
-		execution_time = end_time - start_time
-		st.write(f"Execution time: {execution_time} seconds")
+		# end_time = time.time()
+		# execution_time = end_time - start_time
+		# st.write(f"Execution time: {execution_time} seconds")
 
 					
 	except Exception as e:
