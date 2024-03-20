@@ -5,7 +5,8 @@ from streamlit_antd_components import menu, MenuItem
 import streamlit_antd_components as sac
 from basecode2.app_management import load_app_settings, load_sa_app_settings
 from basecode2.authenticate import login_function
-from basecode2.prompt_module import manage_prompt_org
+#from basecode2.prompt_module import manage_prompt_org
+from basecode2.personal_prompt import set_prompt_settings
 from basecode2.rag_mongodb import rag_creator_mongodb
 from basecode2.app_management import set_app_settings, delete_app_settings
 from basecode2.org_module import (
@@ -72,6 +73,8 @@ SA = config_handler.get_value('constants', 'SA')
 AD = config_handler.get_value('constants', 'AD')
 ACK = config_handler.get_value('application_agreement', 'ACK')
 PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
+PROMPT_CONFIG = config_handler.get_value('menu_lists', 'PROMPT_CONFIG')
+APP_CONFIG = config_handler.get_value('menu_lists', 'APP_CONFIG')
 os.environ['TIKTOKEN_CACHE_DIR'] = st.secrets["NLTK_DATA"]
 os.environ['NLTK_DATA'] = st.secrets["NLTK_DATA"]
 
@@ -286,11 +289,8 @@ def main():
 					with col2:
 						pass
 		elif st.session_state.option == 'Home':
-			st.subheader(f":green[Please select a school below to proceed if there is any]")
+			#st.subheader(f":green[Please select a school below to proceed if there is any]")
 			load_chatbot_session_states()
-			if st.session_state.user['profile_id'] == SA:
-				load_sa_app_settings()
-				st.divider()
 			col1, col2 = st.columns([3,1])
 			with col1:
 				st.subheader("Acknowledgement on the use of Generative AI with Large Language Models")
@@ -300,7 +300,8 @@ def main():
 				if ack:
 					st.session_state.acknowledgement = True
 					set_function_access_for_user()
-					load_app_settings()
+					#load_app_settings("prompt_templates", PROMPT_CONFIG)
+					load_app_settings("app_settings", APP_CONFIG)
 					st.session_state.start = 1
 					st.rerun()
 				else:
@@ -315,6 +316,9 @@ def main():
 		elif st.session_state.option == 'Personal Dashboard':
 			st.subheader(f":green[{st.session_state.option}]")
 			class_dash()
+		#workshop_activities
+			if st.session_state.user['profile_id'] == SA:
+				load_sa_app_settings()
 		elif st.session_state.option == 'Discussion Chatbot':
 			st.subheader(f":green[{st.session_state.option}]")
 			main_discussion_bot()
@@ -374,7 +378,7 @@ def main():
 			rag_creator_mongodb()
 		elif st.session_state.option == 'Prompt Management':
 			st.subheader(f":green[{st.session_state.option}]")
-			manage_prompt_org()
+			set_prompt_settings()
 		#workshop tools
 		
 			
@@ -395,7 +399,6 @@ def main():
 								)
 				if steps_options == "Create new school":
 					create_school()
-					load_sa_app_settings()
 				elif steps_options == "Manage School":
 					manage_organisation()
 				elif steps_options == "Manage Users":

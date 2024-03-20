@@ -116,6 +116,7 @@ def sa_select_school():
 		st.error("No schools found. Please add a school first.")
 		return []
 	#school = st.selectbox('Select School', sch_names, key='school')
+	# can set to duckdb for list of school this is for super_admin only
 	return sch_names
 
 

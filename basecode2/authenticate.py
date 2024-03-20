@@ -35,6 +35,7 @@ def check_password(username, password):
 		else:
 			return False
 
+#store in duck db 
 def return_openai_key():
 	return st.session_state.openai_key
 
