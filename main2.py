@@ -3,11 +3,11 @@ import nltk
 import streamlit as st
 from streamlit_antd_components import menu, MenuItem
 import streamlit_antd_components as sac
-from basecode2.app_management import load_app_settings, load_sa_app_settings
+from basecode2.app_management import load_app_settings, load_sa_app_settings, propagate_prompts
 from basecode2.authenticate import login_function
 from basecode2.personal_prompt import set_prompt_settings, manage_prompt_templates
 from basecode2.rag_mongodb import rag_creator_mongodb
-from basecode2.app_management import set_app_settings, delete_app_settings
+from basecode2.app_management import set_app_settings, delete_app_settings, delete_prompt_settings
 from basecode2.org_module import (
 	setup_users, 
 	manage_app_access, 
@@ -19,7 +19,6 @@ from basecode2.org_module import (
 	sa_delete_profile_from_school,
 	manage_students_school,
 	manage_teachers_school,
-	generate_full_structure
 	)
 from basecode2.sqlite_db import create_sql_db
 from basecode2.chatbot import main_chatbot_functions
@@ -168,7 +167,7 @@ def load_chatbot_session_states():
 		st.session_state.rag_response = None
   
 def load_mongo_db():
-    pass	
+	pass	
 
 
 def load_safa_session_states():
@@ -389,6 +388,7 @@ def main():
 		#Organisation Tools
 		elif st.session_state.option == "Org Management":
 			if st.session_state.user['profile_id'] == SA or st.session_state.user['profile_id'] == AD:
+				create_flag = True
 				if st.session_state.user['profile_id'] == SA:
 					create_flag = False
 				steps_options = sac.steps(
@@ -398,7 +398,7 @@ def main():
 										sac.StepsItem(title='Manage School'),
 										sac.StepsItem(title='Function Access'),
 										sac.StepsItem(title='User Assignments'),
-										sac.StepsItem(title='App configuration',disabled=create_flag),
+										sac.StepsItem(title='App configuration'),
 									]
 								)
 				if steps_options == "Create new school":
@@ -423,6 +423,10 @@ def main():
 					set_app_settings()
 					st.divider()
 					delete_app_settings()
+					st.divider()
+					delete_prompt_settings()
+					st.divider()
+					propagate_prompts()
 				else:
 					st.subheader(f":red[This option is accessible only to administrators only]")	
 				pass
