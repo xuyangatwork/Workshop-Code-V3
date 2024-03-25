@@ -40,7 +40,7 @@ def class_dash():
 	if st.session_state.user['profile_id'] == SA:
 		sch_names = sa_select_school()
 		school = st.selectbox('Select School', sch_names, key='app_school')
-		st.write(f":green[School Selected: {school}]")
+		st.write(f"#### :blue[School Selected: {school}]")
 		if st.checkbox("Show all schools data"):
 			data, columns = fetch_all_data()
 			display_data(data, columns)
@@ -52,18 +52,18 @@ def class_dash():
 					display_data(data, columns)
 
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		st.write(f"#### :blue[School Selected: {st.session_state.user['school_id']}]")
 		if st.button("Show School Data"):
 			data, columns = fetch_data_by_school(st.session_state.user['school_id'])
 			display_data(data, columns)
 
 	elif st.session_state.user['profile_id'] == STU:
-		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		st.write(f"#### :blue[School Selected: {st.session_state.user['school_id']}]")
 		if st.button("Show personal data"):
 			data, columns = fetch_data_by_username(st.session_state.user['id'])
 			display_data(data, columns)
 	else:
-		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		st.write(f"#### :blue[School Selected: {st.session_state.user['school_id']}]")
 		action = st.selectbox('Select Action', ['Personal', 'Class'])
 		if action == 'Personal':
 			if st.button("Show personal data"):

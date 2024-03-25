@@ -64,6 +64,8 @@ def initialise_admin_account():
 		st.session_state.s_collection = None
 	if "u_collection" in st.session_state:
 		st.session_state.u_collection = None
+	# if "c_collection" in st.session_state:
+	# 	st.session_state.c_collection = None
 	#this portion can either be in st.secrets or password manager in AWS
 		
 	if "URI" in st.secrets["MONGO"]:
@@ -79,6 +81,7 @@ def initialise_admin_account():
 	db = client[DATABASE_NAME]
 	st.session_state.s_collection = db["schools"]
 	st.session_state.u_collection = db["users"]
+	# st.session_state.c_collection = db["conversation"]
 	if check_condition_value(ALL_ORG, True):
 		return
 	else:
@@ -405,8 +408,8 @@ def setup_users():
 		elif action == 'Edit Usernames':
 			edit_usernames(school)
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
-		school = st.session_state.user['sch_name']
+		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		school = st.session_state.user['school_id']
 		action = st.selectbox('Select Action', ['Edit User', 'Remove User', 'Create Users'], key='u_action')
 		if action == 'Edit User':
 			setup_mass_edit_users(school)
@@ -485,8 +488,8 @@ def manage_app_access():
 		edit_function(school)
 		
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
-		edit_function(st.session_state.user['sch_name'])
+		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		edit_function(st.session_state.user['school_id'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
 
@@ -564,13 +567,13 @@ def manage_organisation():
 				generate_school_structure(sch_doc)
 		manage_levels_classes(school)
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
-		sch_doc = st.session_state.s_collection.find_one({"sch_name": st.session_state.user['sch_name']})
+		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
+		sch_doc = st.session_state.s_collection.find_one({"sch_name": st.session_state.user['school_id']})
 		if sch_doc:
 			c1, c2 = st.columns([1, 3])
 			with c1:
 				generate_school_structure(sch_doc)
-		manage_levels_classes(st.session_state.user['sch_name'])
+		manage_levels_classes(st.session_state.user['school_id'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
 
@@ -800,7 +803,7 @@ def remove_level(sch_name):
 
 
 def sa_delete_profile_from_school():
-	st.subheader("Delete Profile from School")
+	st.subheader(":red[Delete current function access settings for a profile in a school]")
 
 	if st.session_state.user['profile_id'] == SA:
 		sch_names = sa_select_school()
@@ -854,11 +857,11 @@ def manage_teachers_school():
 		else:
 			st.warning("Please select a school first.")
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
+		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
 		c1, c2 = st.columns([1, 3])
 		with c1:
-			generate_full_structure(st.session_state.user['sch_name'], st.session_state.s_collection, st.session_state.u_collection)
-		manage_teachers(st.session_state.user['sch_name'])
+			generate_full_structure(st.session_state.user['school_id'], st.session_state.s_collection, st.session_state.u_collection)
+		manage_teachers(st.session_state.user['school_id'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
 
@@ -1027,6 +1030,13 @@ def add_teachers_to_class(sch_name, level_name, class_name):
 							{"$setOnInsert": {"level": []}},
 							upsert=True
 						)
+
+						already_assigned = st.session_state.u_collection.count_documents(
+                            {"username": teacher, "level": level_name, "class": class_name}
+                        )
+						if already_assigned > 0:
+							st.warning(f"{teacher} is already assigned to {level_name} - {class_name}.")
+							continue
 						
 						# Then, push the new level_name to the 'level' array.
 						# This ensures that 'level' is always treated as an array.
@@ -1052,6 +1062,52 @@ def add_teachers_to_class(sch_name, level_name, class_name):
 
 						
 					st.success(f"Successfully added {len(selected_teachers)} teachers to the class.")
+
+# def add_teachers_to_class(sch_name, level_name, class_name):
+#     # fetch all teachers from the school regardless of class assignment
+#     all_teachers = fetch_all_teachers(sch_name)
+#     if not all_teachers:
+#         st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
+#         return
+    
+#     # check how many teachers can be added to the class
+#     num_teachers = NUM_TCH - len(fetch_teachers_for_class(sch_name, level_name, class_name))
+#     if num_teachers <= 0:
+#         st.warning(f"No more teachers can be added to {level_name} - {class_name}.")
+#         return
+    
+#     selected_teachers = st.multiselect("Select Teachers to Add", all_teachers)
+#     if not selected_teachers:
+#         st.warning("Please select teachers to add to the class.")
+#         return
+    
+#     if st.button("Add Teachers"):
+#         if num_teachers < len(selected_teachers):
+#             st.warning(f"Number of teachers to add ({len(selected_teachers)}) exceeds the available slots ({num_teachers}).")
+#             return
+#         successfully_added = 0
+#         for teacher in selected_teachers:
+#             # Ensure 'level' and 'class' are arrays and add the new level and class if not already present
+#             result = st.session_state.u_collection.update_one(
+#                 {"username": teacher, "level": {"$ne": level_name}, "class": {"$ne": class_name}},
+#                 {
+#                     "$setOnInsert": {"level": [], "class": []},
+#                     "$addToSet": {"level": level_name, "class": class_name}
+#                 },
+#                 upsert=True
+#             )
+            
+#             # If the teacher was updated (meaning they were not already assigned to this class), increment count
+#             if result.modified_count > 0:
+#                 successfully_added += 1
+        
+#         if successfully_added > 0:
+#             st.success(f"Successfully added {successfully_added} teachers to the class.")
+#         else:
+#             st.info("No new teachers were added to the class. They might already be assigned.")
+
+
+
 
 def fetch_all_teachers(sch_name):
 	# Fetch all teachers from the school
@@ -1095,11 +1151,11 @@ def manage_students_school():
 		else:
 			st.warning("Please select a school first.")
 	elif st.session_state.user['profile_id'] == AD:
-		st.write(f":green[School Selected: {st.session_state.user['sch_name']}]")
+		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
 		c1, c2 = st.columns([1, 3])
 		with c1:
-			generate_full_structure(st.session_state.user['sch_name'], st.session_state.s_collection, st.session_state.u_collection)
-		manage_students(st.session_state.user['sch_name'])
+			generate_full_structure(st.session_state.user['school_id'], st.session_state.s_collection, st.session_state.u_collection)
+		manage_students(st.session_state.user['school_id'])
 	else:
 		st.warning('You do not have the required permissions to perform this action')
 

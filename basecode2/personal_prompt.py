@@ -23,6 +23,7 @@ config_handler = ConfigHandler()
 # Fetching constants from config.ini
 SA = config_handler.get_config_values('constants', 'SA')
 AD = config_handler.get_config_values('constants', 'AD')
+TCH = config_handler.get_config_values('constants', 'TCH')
 APP_CONFIG = config_handler.get_config_values('menu_lists', 'APP_CONFIG')
 PROMPT_CONFIG = config_handler.get_config_values('menu_lists', 'PROMPT_CONFIG')
 APP_SETTINGS_LIST = config_handler.get_config_values('menu_lists', 'APP_SETTINGS_LIST')
@@ -75,6 +76,37 @@ def load_document(username, field_name=None, dict_input=None):
 	# If the document and field_name exist, return its value
 	#st.write(f"Loaded {field_name} from {username} settings")
 	return document.get(field_name)
+
+def app_load_document(sch, field_name=None, dict_input=None):
+	# Try to find the document by school name
+	document = st.session_state.a_collection.find_one({"sch_name": sch})
+
+	# If the document doesn't exist and both field_name and dict_input are provided,
+	# create a new document with these details
+	if not document and field_name and dict_input is not None:
+		new_document = {"sch_name": sch, field_name: dict_input}
+		st.session_state.a_collection.insert_one(new_document)
+		st.write(f"Added {field_name} to {sch} settings for the first time")
+		return dict_input  # Return the newly added data
+
+	# If the document exists but doesn't contain the field_name, handle the missing key
+	if document and field_name and document.get(field_name) is None:
+		if dict_input is not None:
+			# If dict_input is provided, update the document with this new field and value
+			st.session_state.a_collection.update_one(
+				{"sch_name": sch},
+				{"$set": {field_name: dict_input}}
+			)
+			st.write(f"Added {field_name} to {sch} settings")
+			return dict_input  # Return the newly added data
+		else:
+			# If dict_input is not provided, just return None or a default value
+			return None
+
+	# If the document and field_name exist, return its value
+	#st.write(f"Loaded {field_name} from {username} settings")
+	return document.get(field_name)
+
 
 
 def load_user_settings(field_name, dict): #load_prompt setting
@@ -176,7 +208,7 @@ def manage_prompt_templates():
 	if prompt_select == "School Prompt Templates":
 		#st.session_state.current_prompt = prompt_select
 		excluded_fields = ['_id', 'sch_name']
-		doc = load_document(st.session_state.user['school_id'], "prompt_templates", PROMPT_CONFIG)
+		doc = app_load_document(st.session_state.user['school_id'], "prompt_templates", PROMPT_CONFIG)
 		doc_for_df = {k: v for k, v in doc.items() if k not in excluded_fields}
 		st.session_state.app_pdf = pd.DataFrame(list(doc_for_df.items()), columns=['Field', 'Values'])
 		st.write("Current Settings : ", "prompt_templates")
@@ -225,3 +257,78 @@ def manage_prompt_templates():
 			st.success("Personal Prompt Templates loaded successfully")
 			return True
 			
+   
+def load_templates_class():
+	if st.session_state.user['profile_id'] == SA:
+		return
+	my_class  = load_my_class()
+	if my_class == None:
+		st.error("Class not allocated to you. Please contact the admin.")
+		return
+	if isinstance(my_class, list):
+	# Convert list to a nicely formatted string
+		class_str = ', '.join(my_class)
+		st.write(f"#### :blue_book: My assigned class: {class_str}")
+	else:
+		# If 'my_class' is not a list, display it directly
+		st.write(f"#### :blue_book: My current class: {my_class}")
+	if st.session_state.user['profile_id'] == TCH:
+		return
+	else:
+		teachers = list_teachers_for_student(my_class)
+		selected_teacher_username = st.selectbox("Select my teacher to load templates", ['School Default'] + teachers)
+		if selected_teacher_username == 'School Default':
+			st.success("Loading School Default Templates")
+			return
+		else:
+			teacher_doc = st.session_state.u_collection.find_one({"username": selected_teacher_username})
+			templates = teacher_doc.get('prompt_templates')
+
+			for key, value in templates.items():
+				if key not in st.session_state:
+					session_key = key.replace(" ", "_").lower()
+					st.session_state[session_key] = value
+			
+			for key in templates.keys():
+					session_key = key.replace(" ", "_").lower()
+					st.session_state[session_key] = templates[key]
+			st.success(f"Teacher {selected_teacher_username} Prompt Templates loaded successfully")
+			st.write(templates)
+		
+		pass
+	#load personal templates or school templates to students
+	
+
+def load_my_class():
+	student_document = st.session_state.u_collection.find_one(
+	{"username": st.session_state.user['id']},
+	{"class": 1, "_id": 0}
+	)
+	if student_document:
+		student_class = student_document.get('class', 'Class not specified')
+		return student_class
+ 
+def list_teachers_for_student(student_class):
+	# Since 'student_class' is now a single class (not a list),
+	# the query looks for teachers who teach this specific class.
+	teachers = st.session_state.u_collection.find({
+		"profile": "Teacher",
+		"class": student_class  # Direct comparison to the single class string
+	}).distinct("username")  # Assuming 'username' uniquely identifies a teacher
+
+	return teachers
+
+def load_teacher_templates_for_student(sch_name, student_class):
+	teachers = list_teachers_for_student(student_class)
+	
+	# Streamlit UI for teacher selection
+	selected_teacher_username = st.selectbox("Select a Teacher", teachers)
+	
+	if selected_teacher_username:
+		# Mock retrieval of teacher document - replace with your actual database query
+		teacher_document = {"username": selected_teacher_username, "profile": "Teacher", "templates": ["Template 1", "Template 2"]}  # Mock data
+		
+		if teacher_document:
+			templates = teacher_document.get('templates')
+			return templates
+	return None

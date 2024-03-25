@@ -1,25 +1,16 @@
 
-from basecode2.authenticate import hash_password
 from basecode2.org_module import sa_select_school
-from bson.binary import Binary
 import tempfile
 import streamlit_antd_components as sac
 import streamlit as st
-import time
 import pandas as pd
 import configparser
 from langchain_community.vectorstores import FAISS
 import tempfile
-import pickle
 import os
 import shutil
 import ast
 from pymongo import MongoClient
-import pymongo
-#from bson import ObjectId
-import certifi
-import botocore 
-import botocore.session
 from langchain_community.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.document_loaders import UnstructuredFileLoader
@@ -145,23 +136,51 @@ def delete_rag_direct():
 		st.success(f"All RAGs owned by {owner} deleted successfully!")
 
 
-def display_documents_as_dataframe(owner):
-	# Assuming st.session_state.r_collection is your MongoDB collection
-	documents = st.session_state.r_collection.find({"owner": owner})
+# def display_documents_as_dataframe(owner):
+# 	# Assuming st.session_state.r_collection is your MongoDB collection
+# 	documents = st.session_state.r_collection.find({"owner": owner})
 	
-	# Convert MongoDB documents to a list of dictionaries, excluding '_id' and 'rag_data'
-	docs_list = []
-	for doc in documents:
-		# Remove '_id' and 'rag_data' fields
+# 	# Convert MongoDB documents to a list of dictionaries, excluding '_id' and 'rag_data'
+# 	docs_list = []
+# 	for doc in documents:
+# 		# Remove '_id' and 'rag_data' fields
+# 		doc.pop('_id', None)
+# 		doc.pop('rag_data', None)
+# 		docs_list.append(doc)
+	
+# 	# Create a DataFrame from the list of dictionaries
+# 	df = pd.DataFrame(docs_list)
+	
+# 	# Display the DataFrame in Streamlit
+# 	st.dataframe(df)
+
+def display_documents_as_dataframe(school):
+	# Perform the first query for documents where the 'owner' is the school
+	documents_owner_school = st.session_state.r_collection.find({"owner": school})
+	
+	# Perform the second query for documents where 'sharing' is True and 'school' matches
+	documents_sharing_true = st.session_state.r_collection.find({"sharing": True, "school": school})
+	
+	# Combine the results of both queries into a single list of dictionaries, excluding '_id' and 'rag_data'
+	combined_docs_list = []
+	for doc in documents_owner_school:
 		doc.pop('_id', None)
 		doc.pop('rag_data', None)
-		docs_list.append(doc)
+		combined_docs_list.append(doc)
 	
-	# Create a DataFrame from the list of dictionaries
-	df = pd.DataFrame(docs_list)
+	for doc in documents_sharing_true:
+		# Check to avoid duplicates if a document satisfies both conditions
+		if doc not in combined_docs_list:
+			doc.pop('_id', None)
+			doc.pop('rag_data', None)
+			combined_docs_list.append(doc)
+	
+	# Create a DataFrame from the combined list of dictionaries
+	df = pd.DataFrame(combined_docs_list)
 	
 	# Display the DataFrame in Streamlit
 	st.dataframe(df)
+
 
 def create_rag_mongodb(var,school_flag):
 	#st.write(return_openai_key())	
@@ -255,6 +274,16 @@ def fetch_serialized_faiss(db_collection, rag_name, owner):
 	else:
 		return None
 
+# Example function to fetch the serialized FAISS object from the database
+def fetch_shared_serialized_faiss(db_collection, rag_name):
+	# Adjust the query to include both 'name' and 'owner' fields
+	document = db_collection.find_one({'name': rag_name})
+	if document:
+		return document['rag_data']
+	else:
+		return None
+
+
 def list_rags_for_owner(db_collection, owner):
 	# Query the database for documents with the specified owner
 	documents = db_collection.find({'owner': owner})
@@ -263,15 +292,15 @@ def list_rags_for_owner(db_collection, owner):
 	return rag_names
 
 def list_rags_for_shareable(db_collection, school):
-    # Query the database for documents with the specified owner, where sharing is True and school matches the provided argument
-    query = {
-        'sharing': True,
-        'school': school
-    }
-    documents = db_collection.find(query)
-    # Collect the 'name' (RAG name) from each document
-    rag_names = [doc['name'] for doc in documents]
-    return rag_names
+	# Query the database for documents with the specified owner, where sharing is True and school matches the provided argument
+	query = {
+		'sharing': True,
+		'school': school
+	}
+	documents = db_collection.find(query)
+	# Collect the 'name' (RAG name) from each document
+	rag_names = [doc['name'] for doc in documents]
+	return rag_names
 
 def sch_check_and_get_rag_list(sch_name):
 	school_doc = st.session_state.s_collection.find_one({"sch_name": sch_name},{"rag_list": 1})
@@ -308,10 +337,29 @@ def u_update_rag_list(u_name, new_value):
 		st.success("Updated successfully!")
 	else:
 		st.error("No more than 10 items allowed in the list.")
-
+def structure_rag():
+	st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
+	vs, rn = load_rag()
+	d1,d2,d3 = st.columns([2,2,3])
+	with d1:
+		if st.button("Load RAG", on_click=index_button):
+			st.session_state.vs = vs
+			st.session_state.current_kb_model = rn
+			st.write("RAG KB Loaded")
+			#st.rerun()
+	with d2:
+		if st.button("Unload RAG", on_click=index_button):
+			st.session_state.vs = None
+			st.session_state.current_kb_model = ""
+			st.write("RAG KB Unloaded")
 
 def load_rag():
+	if "index_button" not in st.session_state:
+		st.session_state.index_button = 0
+		
 	os.environ["OPENAI_API_KEY"] = return_openai_key()
+	st.write(f"#### Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
+	
 	initialise_rag_collection()
 	# Fetch all RAGs for the current user
 	if st.toggle("Load Personal RAG"):
@@ -320,21 +368,36 @@ def load_rag():
 		if rag_list == []:
 			st.error("No RAGs found.")
 		else:
-			rag_name = st.selectbox("Select RAG", rag_list)
-			# Fetch the serialized FAISS object from the database
-			serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, st.session_state.user['id'])
-			# Unserialize the FAISS object
-			#faiss_obj = unserialize_faiss_object(serialized_faiss)
-			embeddings_instance = OpenAIEmbeddings()
-			faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
+			rag_name = st.selectbox("Select RAG", ['-'] + rag_list)	
+			d1,d2,d3 = st.columns([2,2,3])
+			with d1:
+				if st.button("Load RAG", on_click=index_button):	
+					if rag_name != "-":
+						# Fetch the serialized FAISS object from the database
+						serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, st.session_state.user['id'])
+						# Unserialize the FAISS object
+						#faiss_obj = unserialize_faiss_object(serialized_faiss)
+						embeddings_instance = OpenAIEmbeddings()
+						faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
 
-			if faiss_obj is not None:
-				# Proceed with using the deserialized FAISS index
-				print("FAISS index deserialized successfully.")
-			else:
-				print("Failed to deserialize FAISS index.")
-			# Return the FAISS object
-			return faiss_obj, rag_name
+						if faiss_obj is not None:
+							# Proceed with using the deserialized FAISS index
+							print("FAISS index deserialized successfully.")
+						else:
+							print("Failed to deserialize FAISS index.")
+						# Return the FAISS object
+						st.session_state.vs = faiss_obj
+						st.session_state.current_kb_model = rag_name
+						st.rerun()
+					else:
+						st.warning("Please select a RAG to load.")
+			with d2:
+				if st.session_state.vs is not None:
+					if st.button("Unload RAG"):
+						st.session_state.vs = None
+						st.session_state.current_kb_model = ""
+						st.rerun()
+				 #return faiss_obj, rag_name
 	else:
 		if st.session_state.user["profile_id"] == SA:
 			sch_names = sa_select_school()
@@ -343,22 +406,42 @@ def load_rag():
 			display_documents_as_dataframe(school)
 			if school != "Select School" and school != None:
 				rag_list = list_rags_for_owner(st.session_state.r_collection, school)
+				share_list = list_rags_for_shareable(st.session_state.r_collection, school)
+				rag_list = share_list + rag_list
 				if rag_list == []:
 					st.error("No RAGs found.")
 				else:
-					rag_name = st.selectbox("Select RAG", rag_list)
-					# Fetch the serialized FAISS object from the database
-					serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, st.session_state.user['school_id'])
-					embeddings_instance = OpenAIEmbeddings()
-					faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
-					if faiss_obj is not None:
-						# Proceed with using the deserialized FAISS index
-						print("FAISS index deserialized successfully.")
-					else:
-						print("Failed to deserialize FAISS index.")
-					# Return the FAISS object
-					return faiss_obj, rag_name
-		else:
+					rag_name = st.selectbox("Select RAG", ['-'] + rag_list, index=st.session_state.index_button)
+					e1,e2,e3 = st.columns([2,2,3])
+					with e1:
+						if st.button("Load RAG", on_click=index_button):
+							if rag_name != "-":
+								# Fetch the serialized FAISS object from the database
+								if rag_name in share_list:
+									serialized_faiss = fetch_shared_serialized_faiss(st.session_state.r_collection, rag_name)
+								else:
+									serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, school)
+								#st.write(serialized_faiss)
+								embeddings_instance = OpenAIEmbeddings()
+								faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
+								if faiss_obj is not None:
+									# Proceed with using the deserialized FAISS index
+									print("FAISS index deserialized successfully.")
+								else:
+									print("Failed to deserialize FAISS index.")
+								# Return the FAISS object
+								st.session_state.vs = faiss_obj
+								st.session_state.current_kb_model = rag_name
+								st.rerun()
+							else:
+								st.warning("Please select a RAG to load.")
+					with e2:
+						if st.session_state.vs is not None:
+							if st.button("Unload RAG"):
+								st.session_state.vs = None
+								st.session_state.current_kb_model = ""
+								st.rerun()
+		else: #student or teacher
 			st.write("School RAG Display")
 			display_documents_as_dataframe(st.session_state.user['school_id'])
 			rag_list = list_rags_for_owner(st.session_state.r_collection, st.session_state.user['school_id'])
@@ -367,19 +450,36 @@ def load_rag():
 			if rag_list == []:
 				st.error("No RAGs found.")
 			else:
-				rag_name = st.selectbox("Select RAG", rag_list)
-				# Fetch the serialized FAISS object from the database
-				serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, st.session_state.user['school_id'])
-				embeddings_instance = OpenAIEmbeddings()
-				faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
-				if faiss_obj is not None:
-					# Proceed with using the deserialized FAISS index
-					print("FAISS index deserialized successfully.")
-				else:
-					print("Failed to deserialize FAISS index.")
-				# Return the FAISS object
-				return faiss_obj, rag_name
-	return None, None
-
-
-
+				rag_name = st.selectbox("Select RAG", ['-'] + rag_list, index=st.session_state.index_button)
+				f1,f2,f3 = st.columns([2,2,3])
+				with f1:
+					if st.button("Load RAG", on_click=index_button):
+						if rag_name != "-":
+							# Fetch the serialized FAISS object from the database
+							if rag_name in share_list:
+								serialized_faiss = fetch_shared_serialized_faiss(st.session_state.r_collection, rag_name)
+							else:
+								serialized_faiss = fetch_serialized_faiss(st.session_state.r_collection, rag_name, st.session_state.user['school_id'])
+							#st.write(serialized_faiss)
+							embeddings_instance = OpenAIEmbeddings()
+							faiss_obj = FAISS.deserialize_from_bytes(embeddings=embeddings_instance, serialized=serialized_faiss)
+							if faiss_obj is not None:
+								# Proceed with using the deserialized FAISS index
+								print("FAISS index deserialized successfully.")
+							else:
+								print("Failed to deserialize FAISS index.")
+							
+							st.session_state.vs = faiss_obj
+							st.session_state.current_kb_model = rag_name
+							st.rerun()							
+       						# Return the FAISS object
+						else:
+							st.warning("Please select a RAG to load.")
+				with f2:
+					if st.session_state.vs is not None:
+						if st.button("Unload RAG"):
+							st.session_state.vs = None
+							st.session_state.current_kb_model = ""
+							st.rerun()
+def index_button():
+	st.session_state.index_button = 0

@@ -98,6 +98,8 @@ def load_app_settings(field_name, dict): #load_prompt setting
 
 
 def load_sa_app_settings():
+	if "school_sa_selected" not in st.session_state:
+		st.session_state.school_sa_selected = ""
 	st.warning("Super Administrator must select a school to load settings")
 	initialize_app_settings()
 	excluded_fields = ['_id', 'sch_name']
@@ -107,6 +109,7 @@ def load_sa_app_settings():
 		st.error("No schools found")
 		return True
 	else:
+		st.write(f"####  :blue[Current Super Admin School: {st.session_state.school_sa_selected}]")
 		school = st.selectbox('Select School', ["Select School"] + sch_names, key='sa_app_school')
 		if school != "Select School" and school != None:
 			st.session_state.user['school_id'] = school
@@ -120,12 +123,13 @@ def load_sa_app_settings():
 					st.session_state[session_key] = value
 					#st.write(key, value)
 			st.success(f"{school} settings loaded successfully")
-			return True	
+			st.session_state.school_sa_selected = school
+			return True
 
 
 
 def delete_app_settings():
-	st.subheader(":red[Delete App Configuration]")
+	st.subheader(":red[Reset App Configuration]")
 	if st.session_state.user['profile_id'] != SA:
 		st.write("You are not authorized to perform this action")
 		return
@@ -133,10 +137,31 @@ def delete_app_settings():
 		sch_names = sa_select_school()
 		school = st.selectbox('Select School', ["Select School"] + sch_names, key='app_school_delete')
 		if school:
-			if st.checkbox("Are you sure you want to delete this school's settings?"):
-				if st.button("Delete"):
-					st.session_state.a_collection.delete_one({"sch_name": school})
+			if st.checkbox("Are you sure you want to reset app settings?"):
+					if st.button("Reset App Configuration"):
+						st.session_state.a_collection.update_one(
+							{"sch_name": school},
+							{"$set": {"app_settings": APP_CONFIG}}
+						)
+						st.write(f"{school} settings deleted successfully")
+	  
+def delete_prompt_settings():
+	st.subheader(":red[Reset Prompt Templates Configuration]")
+	if st.session_state.user['profile_id'] != SA:
+		st.write("You are not authorized to perform this action")
+		return
+	else:
+		sch_names = sa_select_school()
+		school = st.selectbox('Select School', ["Select School"] + sch_names, key='prompt_school_delete')
+		if school:
+			if st.checkbox("Are you sure you want to reset the prompts settings?"):
+				if st.button("Reset Templates Configuration"):
+					st.session_state.a_collection.update_one(
+						{"sch_name": school},
+						{"$set": {"prompt_templates": PROMPT_CONFIG}}
+					)
 					st.write(f"{school} settings deleted successfully")
+	 
 
 def set_app_settings():
 	initialize_app_settings()
@@ -200,3 +225,65 @@ def perform_modification_and_update_session_state(action, field, new_key, new_va
 	
 	
 
+def propagate_prompts():
+    st.subheader(":blue[Propagate Prompt Templates to Schools]")
+    if st.session_state.user['profile_id'] == SA:
+        # Fetch school names
+        sch_names = sa_select_school()
+        
+        # Select the source school for prompt templates
+        source_sch = st.selectbox('Select Source School for Prompts', sch_names, key='source_school')
+        
+        # Fetch the prompt templates from the selected source school
+        if source_sch:
+            source_prompts = fetch_prompts_for_school(source_sch)  # You need to define this function
+            
+            if source_prompts:
+                # Now, select target schools for propagation
+                selected_schs = st.multiselect('Select Target Schools', [sch for sch in sch_names if sch != source_sch], key='target_schools')
+                
+                # List keys from the source prompts for selection
+                prompt_keys = list(source_prompts.keys())
+                selected_keys = st.multiselect('Select Prompts to Propagate', prompt_keys, key='propagate_prompts')
+                
+                if selected_schs and selected_keys:
+                    if st.button("Propagate Prompts"):
+                        for school in selected_schs:
+                            # Construct the update statement to only modify selected prompts
+                            update_statement = {"$set": {}}
+                            for key in selected_keys:
+                                # Only add the prompts that are selected to be updated
+                                prompt_path = f"prompt_templates.{key}"
+                                update_statement["$set"][prompt_path] = source_prompts[key]
+                            
+                            # Update the document for each selected target school
+                            st.session_state.a_collection.update_one(
+                                {"sch_name": school},
+                                update_statement
+                            )
+                        
+                        st.write("Prompts propagated successfully")
+
+def fetch_prompts_for_school(sch_name):
+    """
+    Fetch the prompt templates for a given school.
+    
+    Parameters:
+    - sch_name: The name of the school for which to fetch the prompt templates.
+    
+    Returns:
+    - A dictionary of the prompt templates if found, or None if not found.
+    """
+    # Query the database for the document with the matching sch_name
+    school_doc = st.session_state.a_collection.find_one({"sch_name": sch_name})
+    
+    # Check if the document and the prompt_templates field exist
+    if school_doc and "prompt_templates" in school_doc:
+        return school_doc["prompt_templates"]
+    else:
+        # Return None if the document or prompt_templates field doesn't exist
+        return None
+
+
+		
+	
