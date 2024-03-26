@@ -264,21 +264,7 @@ def prototype_settings():
 
 	with tab3:
 		st.subheader("KB settings")
-		st.write("KB settings")
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
-
+		load_rag()
 	with tab4:
 		st.subheader("Form Prompt Settings")
 		form_settings()

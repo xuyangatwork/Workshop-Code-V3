@@ -81,31 +81,21 @@ def starting_bot(): #this bot helps the students to start from nothing  using vi
 		st.session_state.chatbot = st.session_state.starting_bot
 
 	with st.expander("Chatbot Settings"):
-		if "voice_image_file_exist" not in st.session_state:
-			st.session_state.voice_image_file_exist = None
-		if "vision_model" not in st.session_state:
-			st.session_state.vision_model = "gpt-vision"
-		if "start_prompt" not in st.session_state:
-			st.session_state.start_prompt = None
-		
-		if st.toggle("Gemini Vision (Default: GPT-3 Vision)"):
-			st.session_state.vision_model = "gemini-vision"
-		else:
-			st.session_state.vision_model = "gpt-vision"
-
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
+		c1,c2 = st.columns([2,2])
+		with c2:
+			if "voice_image_file_exist" not in st.session_state:
+				st.session_state.voice_image_file_exist = None
+			if "vision_model" not in st.session_state:
+				st.session_state.vision_model = "gpt-vision"
+			if "start_prompt" not in st.session_state:
+				st.session_state.start_prompt = None
+			
+			if st.toggle("Gemini Vision (Default: GPT-3 Vision)"):
+				st.session_state.vision_model = "gemini-vision"
+			else:
+				st.session_state.vision_model = "gpt-vision"
+		with c1:
+			load_rag()
 		#new options --------------------------------------------------------
 	if st.button("Clear Chat"):
 		clear_session_states()
@@ -424,19 +414,7 @@ def network_bot():
 		st.session_state.chatbot = st.session_state.mindmap_bot
 
 	with st.expander("Chatbot RAG Settings"):
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
+		load_rag()
 
 
 	if st.button("Clear Chat"):
@@ -598,19 +576,7 @@ def language_bot():
 		st.session_state.voice_audio_file_path = None
 
 	with st.expander("Chatbot Settings"):
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
+		load_rag()
 
 	if st.button("Clear Chat"):
 		clear_session_states()
@@ -795,19 +761,7 @@ def linking_bot():
 		st.session_state.chatbot = st.session_state.linking_bot
 
 	with st.expander("Chatbot Settings"):
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
+		load_rag()
 
 
 	if st.button("Clear Chat"):

@@ -15,7 +15,27 @@ from langchain.utilities import WikipediaAPIWrapper
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain.agents import tool
 import json
+import configparser
+import ast
 
+class ConfigHandler:
+	def __init__(self):
+		self.config = configparser.ConfigParser()
+		self.config.read('config.ini')
+
+	def get_config_values(self, section, key):
+		value = self.config.get(section, key)
+		try:
+			# Try converting the string value to a Python data structure
+			return ast.literal_eval(value)
+		except (SyntaxError, ValueError):
+			# If not a data structure, return the plain string
+			return value
+
+config_handler = ConfigHandler()
+# Fetching constants from config.ini
+SA = config_handler.get_config_values('constants', 'SA')
+AD = config_handler.get_config_values('constants', 'AD')
 
 # smart agents accessing the internet for free
 # https://github.com/langchain-ai/streamlit-agent/blob/main/streamlit_agent/search_and_chat.py
@@ -58,20 +78,8 @@ def google_search(query: str) -> str:
 def agent_bot():
 	st.subheader("Smart Bot with Tools")
 	with st.expander("Agent Management"):
-		st.write(f"Currently Loaded KB (RAG): {st.session_state.current_kb_model}")
-		vs, rn = load_rag()
-		d1,d2,d3 = st.columns([2,2,3])
-		with d1:
-			if st.button("Load RAG"):
-				st.session_state.vs = vs
-				st.session_state.current_kb_model = rn
-				st.rerun()
-		with d2:
-			if st.button("Unload RAG"):
-				st.session_state.vs = None
-				st.session_state.current_kb_model = ""
-				st.rerun()
-     
+		load_rag()
+		st.divider()
 		agent_management()
   
 	openai.api_key = return_openai_key()

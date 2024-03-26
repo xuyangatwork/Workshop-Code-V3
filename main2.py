@@ -373,7 +373,8 @@ def main():
 			rag_bot()             
 		elif st.session_state.option == 'Teacher Assistant Bot':
 			st.subheader(f":green[{st.session_state.option}]")
-			assistant_demo()
+			st.write("### Feature not available yet")
+			#assistant_demo()
 		elif st.session_state.option == "KB (RAG) Management":
 			st.subheader(f":green[{st.session_state.option}]") 
 			rag_creator_mongodb()
