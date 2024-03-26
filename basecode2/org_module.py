@@ -958,7 +958,7 @@ def fetch_teachers_for_class(sch_name, level_name, class_name):
 	teachers = [teacher["username"] for teacher in teachers_cursor]
 
 	if not teachers:
-		st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
+		#st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
 		return []
 	else:
 		return teachers
@@ -1004,7 +1004,7 @@ def add_teachers_to_class(sch_name, level_name, class_name):
 	#fetch all teachers from the school regardless of class assignment
 	all_teachers = fetch_all_teachers(sch_name)
 	if all_teachers == []:
-		st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
+		#st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
 		return
 	else:
 		#check how many teachers can be added to the class by subtract
@@ -1120,7 +1120,7 @@ def fetch_all_teachers(sch_name):
 	teachers = [teacher["username"] for teacher in teachers_cursor]
 
 	if not teachers:
-		st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
+		#st.warning(f"No teachers found for {sch_name}. Please add teachers from classes first.")
 		return []
 	else:
 		return teachers
