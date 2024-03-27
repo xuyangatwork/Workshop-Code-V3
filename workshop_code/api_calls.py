@@ -1,7 +1,7 @@
 import openai
 from openai import OpenAI
 import streamlit as st
-from basecode2.authenticate import return_openai_key, return_cohere_key, return_google_key
+from basecode2.authenticate import return_openai_key, return_cohere_key, return_google_key, return_claude_key
 import google.generativeai as genai
 import os
 import pandas as pd
@@ -10,6 +10,7 @@ import string
 import cohere
 import ast
 import configparser
+import anthropic
 
 
 class ConfigHandler:
@@ -48,13 +49,15 @@ def call_api():
 	st.subheader("Calling the LLM API")
 	prompt_design = st.text_input("Enter your the prompt design for the API call:", value="You are a helpful assistant.")
 	prompt_query = st.text_input("Enter your user input:", value="Tell me about Singapore in the 1970s in 50 words.")
-	select_model = st.selectbox("Select a model", ["gpt-4-turbo-preview", "gpt-3.5-turbo", "cohere", "gemini-pro"])	
+	select_model = st.selectbox("Select a model", ["gpt-3.5-turbo","gpt-4-turbo-preview", "cohere", "gemini-pro","claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"])	
 	if st.button("Call the API"):
 		if prompt_design and prompt_query:
 			if select_model == "cohere":
 				call_cohere_api(prompt_design, prompt_query)
 			elif select_model == "gemini-pro":
 				call_google_api(prompt_design, prompt_query)
+			elif select_model.startswith("claude"):
+				claude_bot(prompt_design, prompt_query, select_model)
 			else:
 				api_call(prompt_design, prompt_query, select_model)
 		else:
@@ -134,4 +137,34 @@ def api_call(p_design, p_query, model):
 
 
 
+
+def claude_bot(p_design, p_query, model):
+    client = anthropic.Anthropic(api_key=return_claude_key())
+    
+    response = client.messages.create(
+        max_tokens=1024,
+        system=p_design,  
+        messages=[
+            {"role": "user", "content": p_query}
+        ],
+        model=model,
+    )
+
+    # Correcting access method for 'Message' object attributes
+    if response:
+        # Initialize an empty string to accumulate message text
+        message_text = ""
+        # Iterate through each content block in the response's content attribute
+        for content_block in response.content:
+            # Append the text content if the block type is 'text'
+            if content_block.type == 'text':
+                message_text += content_block.text + "\n"  # Add a newline for readability
+
+        # Display the concatenated message text
+        st.write("Message Text:")
+        st.write(message_text.strip())
+        # Access and display input and output tokens from the 'usage' attribute
+        input_tokens = response.usage.input_tokens
+        output_tokens = response.usage.output_tokens
+        st.write(f"Input Tokens: {input_tokens}, Output Tokens: {output_tokens}")
 
