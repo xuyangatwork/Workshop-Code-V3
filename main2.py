@@ -35,7 +35,6 @@ from workshop_code.assistant_bot import assistant_demo
 from workshop_code.knowledge_bot import rag_bot
 from workshop_code.analytics_bot import basic_analysis_bot
 from workshop_code.agent import agent_bot, agent_management
-from workshop_code.machine import machine_learning
 import configparser
 import os
 import ast
@@ -237,7 +236,7 @@ def main():
 					]),
 					#workshop_activities
 					sac.MenuItem('GenAI Capabilities', icon='book', children=[
-						sac.MenuItem(return_function_name('Machine Learning and Neural Network'), icon='stack'),
+						#sac.MenuItem(return_function_name('Machine Learning and Neural Network'), icon='stack'),
 						sac.MenuItem(return_function_name('AI Analytics'), icon='graph-up'),
 						sac.MenuItem(return_function_name('Knowledge Graph Bot'), icon='diagram-3'),
 						sac.MenuItem(return_function_name('Teacher Assistant Bot'), icon='chat-heart'),
