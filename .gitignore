@@ -17,3 +17,4 @@ test.py
 prompt_analyser copy.py
 resources/nltk_data_dir/
 prompt_module_backup.py
+*.txt
