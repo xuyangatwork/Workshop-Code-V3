@@ -139,7 +139,8 @@ def form_settings():
 				st.success("Questions updated successfully!")
 
 def chatbot_settings():
-	temp = st.number_input("Temperature", value=st.session_state.default_temp, min_value=0.0, max_value=1.0, step=0.1)
+	default_temp = float(st.session_state.default_temp) if 'default_temp' in st.session_state and st.session_state.default_temp else 0.5
+	temp = st.slider("Temp", min_value=0.0, max_value=1.0, value=default_temp, step=0.01)
 	k_memory = st.number_input("K Memory", value=st.session_state.default_k_memory, min_value=0, max_value=5, step=1)
 	presence_penalty = st.number_input("Presence Penalty", value=st.session_state.default_presence_penalty, min_value=-2.0, max_value=2.0, step=0.1)
 	frequency_penalty = st.number_input("Frequency Penalty", value=st.session_state.default_frequency_penalty, min_value=-2.0, max_value=2.0, step=0.1)
@@ -564,7 +565,7 @@ def prototype_cohere_bot(bot_name= PROTOTYPE):
 def template_prompt(prompt, prompt_template):
 	client = OpenAI(api_key=return_openai_key())
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model=st.session_state.default_llm_model,
 		messages=[
 			{"role": "system", "content":prompt_template},
 			{"role": "user", "content": prompt},

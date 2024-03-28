@@ -1,12 +1,13 @@
 #Prompt designs for different applications
 from openai import OpenAI
 import streamlit as st
-from basecode2.authenticate import return_openai_key, return_cohere_key, return_google_key
+from basecode2.authenticate import return_openai_key, return_cohere_key, return_google_key, return_claude_key
 import streamlit_antd_components as sac
 import configparser
 import ast
 import cohere
 import google.generativeai as genai
+import anthropic
 class ConfigHandler:
 	def __init__(self):
 		self.config = configparser.ConfigParser()
@@ -69,7 +70,7 @@ def prompt_designs_llm():
 		st.subheader(options)
 		prompt_design = st.text_area("Enter your the prompt design for the API call:", value=selected_prompt_design, max_chars=4000, height=300)
 		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words", max_chars=4000, height=300)
-		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])	
+		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo","gpt-4-turbo-preview", "cohere", "gemini-pro","claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"])	
 		if st.button("Submit Prompt Design and Query to LLM"):
 			if prompt_design and prompt_query:
 				# Replace the placeholder with the actual user input
@@ -79,6 +80,8 @@ def prompt_designs_llm():
 					call_cohere_api(full_prompt)
 				elif select_model == "gemini-pro":
 					call_google_api(full_prompt)
+				elif select_model.startswith("claude"):
+					claude_bot(full_prompt, select_model)
 				else:
 					api_call(full_prompt, select_model)
 			else:
@@ -191,6 +194,37 @@ def call_cohere_api(full_prompt):
 		else:
 			st.error("No response or unexpected response format received from the API.")
 
+def claude_bot(full_prompt, model):
+    client = anthropic.Anthropic(api_key=return_claude_key())
+    
+    response = client.messages.create(
+        max_tokens=1024,
+        system="Please follow the instructions below:",  
+        messages=[
+            {"role": "user", "content": full_prompt}
+        ],
+        model=model,
+    )
+
+    # Correcting access method for 'Message' object attributes
+    if response:
+        # Initialize an empty string to accumulate message text
+        message_text = ""
+        # Iterate through each content block in the response's content attribute
+        for content_block in response.content:
+            # Append the text content if the block type is 'text'
+            if content_block.type == 'text':
+                message_text += content_block.text + "\n"  # Add a newline for readability
+
+        # Display the concatenated message text
+        st.write("Message Text:")
+        st.write(message_text.strip())
+        # Access and display input and output tokens from the 'usage' attribute
+        input_tokens = response.usage.input_tokens
+        output_tokens = response.usage.output_tokens
+        st.write(f"Input Tokens: {input_tokens}, Output Tokens: {output_tokens}")
+
+
 def api_call(full_prompt, model):
 	client = OpenAI(api_key=return_openai_key())
 	st.title("Api Call")
@@ -217,7 +251,8 @@ def api_call(full_prompt, model):
 		st.write(f"Total Tokens: {total_tokens}")
 
 def chatbot_settings():
-	temp = st.number_input("Temperature", value=st.session_state.default_temp, min_value=0.0, max_value=1.0, step=0.1)
+	default_temp = float(st.session_state.default_temp) if 'default_temp' in st.session_state and st.session_state.default_temp else 0.5
+	temp = st.slider("Temp", min_value=0.0, max_value=1.0, value=default_temp, step=0.01)
 	presence_penalty = st.number_input("Presence Penalty", value=st.session_state.default_presence_penalty, min_value=-2.0, max_value=2.0, step=0.1)
 	frequency_penalty = st.number_input("Frequency Penalty", value=st.session_state.default_frequency_penalty, min_value=-2.0, max_value=2.0, step=0.1)
 	if st.button("Update Chatbot Settings", key = 1):

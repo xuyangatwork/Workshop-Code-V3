@@ -70,7 +70,7 @@ def memory_summary_component(prompt, prompt_design): #currently not in use
 	cursor = conn.cursor()
 	os.environ["OPENAI_API_KEY"] = return_openai_key()
 	if "memory" not in st.session_state:
-		llm = ChatOpenAI(model_name=st.session_state.openai_model,temperature=st.session_state.default_temp)
+		llm = ChatOpenAI(model_name=st.session_state.default_llm_model,temperature=st.session_state.default_temp)
 		st.session_state.memory = ConversationSummaryBufferMemory(llm=llm, max_token_limit=2000)
 	messages = st.session_state["memory"].chat_memory.messages
 	previous_summary = ""
@@ -106,7 +106,7 @@ def chat_completion_qa_memory(prompt, prompt_design):
 	client = OpenAI(api_key=return_openai_key())	
 	prompt_template = memory_summary_component(prompt, prompt_design)
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model=st.session_state.default_llm_model,
 		messages=[
 			{"role": "system", "content":prompt_template },
 			{"role": "user", "content": prompt},

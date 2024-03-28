@@ -56,7 +56,8 @@ def bot_settings():
 	with st.form(key='sliders_form'):
 		# Sliders for settings
 		st.write("Current User Bot Settings")
-		temp = st.slider("Temp", min_value=0.0, max_value=1.0, value=st.session_state.default_temp, step=0.01)
+		default_temp = float(st.session_state.default_temp) if 'default_temp' in st.session_state and st.session_state.default_temp else 0.5
+		temp = st.slider("Temp", min_value=0.0, max_value=1.0, value=default_temp, step=0.01)
 		presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.default_presence_penalty, step=0.01)
 		frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.default_frequency_penalty, step=0.01)
 		chat_memory = st.slider("Chat Memory", min_value=0, max_value=10, value=st.session_state.default_k_memory, step=1)	

@@ -370,7 +370,7 @@ def base_bot(bot_name, memory_flag, rag_flag):
 				with messages.chat_message("assistant"):
 					prompt_template = prompt_template_function(prompt, memory_flag, rag_flag)
 					stream = client.chat.completions.create(
-						model=st.session_state.openai_model,
+						model=st.session_state.default_llm_model,
 						messages=[
 							{"role": "system", "content": prompt_template},
 							{"role": "user", "content": prompt},
@@ -546,7 +546,7 @@ def network_base_bot(bot_name, memory_flag, rag_flag):
 			with messages.chat_message("assistant"):
 				prompt_template = prompt_template_function_network(prompt, memory_flag, rag_flag)
 				stream = client.chat.completions.create(
-					model=st.session_state.openai_model,
+					model=st.session_state.default_llm_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
 						{"role": "user", "content": prompt},
@@ -622,7 +622,7 @@ def language_bot():
 			if st.button("Translate"):
 				client = OpenAI(api_key=return_openai_key())
 				stream = client.chat.completions.create(
-						model=st.session_state.openai_model,
+						model=st.session_state.default_llm_model,
 						messages=[
 							{"role": "system", "content": f"Translate the following to {language} as accurately as possible"},
 							{"role": "user", "content": st.session_state.translate_msg},
@@ -717,7 +717,7 @@ def language_base_bot(bot_name, memory_flag, rag_flag):
 			with messages.chat_message("assistant"):
 				prompt_template = prompt_template_function_language(prompt, memory_flag, rag_flag)
 				stream = client.chat.completions.create(
-					model=st.session_state.openai_model,
+					model=st.session_state.default_llm_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
 						{"role": "user", "content": prompt},
@@ -796,7 +796,7 @@ def linking_bot():
 				if st.session_state.concept1 != "" and st.session_state.concept2 != "":
 					client = OpenAI(api_key=return_openai_key())
 					stream = client.chat.completions.create(
-						model=st.session_state.openai_model,
+						model=st.session_state.default_llm_model,
 						messages=[
 							{"role": "user", "content": f"""Link the following concepts together concept 1 : {st.session_state.concept1} and concept 2 : {st.session_state.concept2} , 
 								explain in simple sentences how the concepts can be linked together and generate the complete response that link both concepts together, however should the concepts are not linked, 
@@ -888,7 +888,7 @@ def linking_base_bot(bot_name, memory_flag, rag_flag):
 			with messages.chat_message("assistant"):
 				prompt_template = prompt_template_function_linking(prompt, memory_flag, rag_flag)
 				stream = client.chat.completions.create(
-					model=st.session_state.openai_model,
+					model=st.session_state.default_llm_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
 						{"role": "user", "content": prompt},
