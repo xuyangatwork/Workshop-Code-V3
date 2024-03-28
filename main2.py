@@ -35,7 +35,6 @@ from workshop_code.assistant_bot import assistant_demo
 from workshop_code.knowledge_bot import rag_bot
 from workshop_code.analytics_bot import basic_analysis_bot
 from workshop_code.agent import agent_bot, agent_management
-from workshop_code.machine import machine_learning
 import configparser
 import os
 import ast
