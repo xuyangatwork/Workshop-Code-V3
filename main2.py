@@ -236,7 +236,7 @@ def main():
 					]),
 					#workshop_activities
 					sac.MenuItem('GenAI Capabilities', icon='book', children=[
-						sac.MenuItem(return_function_name('Machine Learning and Neural Network'), icon='stack'),
+						#sac.MenuItem(return_function_name('Machine Learning and Neural Network'), icon='stack'),
 						sac.MenuItem(return_function_name('AI Analytics'), icon='graph-up'),
 						sac.MenuItem(return_function_name('Knowledge Graph Bot'), icon='diagram-3'),
 						sac.MenuItem(return_function_name('Teacher Assistant Bot'), icon='chat-heart'),
