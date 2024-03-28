@@ -110,7 +110,7 @@ def generate_mindmap(prompt):
         api_key=return_openai_key(),
         )
         response = client.chat.completions.create(
-                                        model=st.session_state.openai_model, 
+                                        model=st.session_state.default_llm_model, 
                                         messages=[{"role": "user", "content": prompt}],
                                         temperature=st.session_state.default_temp, #settings option
                                         presence_penalty=st.session_state.default_presence_penalty, #settings option
@@ -183,7 +183,7 @@ def generate_plantuml_mindmap(prompt):
         )
         # Generate response using OpenAI API
         response = client.chat.completions.create(
-                                        model=st.session_state.openai_model, 
+                                        model=st.session_state.default_llm_model, 
                                         messages=[
                                             {"role": "system", "content": "You are going to extract only the necessary information from the chatbot response to create a mindmap"},
                                             {"role": "user", "content": prompt}

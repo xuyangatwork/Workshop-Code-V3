@@ -117,7 +117,7 @@ def analyse_audio(prompt):
 			os.environ["OPENAI_API_KEY"] = return_api_key()
 			# Generate response using OpenAI API
 			response = client.chat.completions.create(
-											model=st.session_state.openai_model, 
+											model=st.session_state.default_llm_model, 
 											messages=[{"role": "user", "content": prompt}],
 											temperature=st.session_state.default_temp, #settings option
 											presence_penalty=st.session_state.default_presence_penalty, #settings option
@@ -340,7 +340,7 @@ def chat_completion_memory(prompt):
 	prompt_template = memory_buffer_component(prompt)
 	#st.write("Prompt Template ", prompt_template)
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model=st.session_state.default_llm_model,
 		messages=[
 			{"role": "system", "content":prompt_template },
 			{"role": "user", "content": prompt},

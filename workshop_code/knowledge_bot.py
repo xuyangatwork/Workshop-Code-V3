@@ -187,7 +187,7 @@ def rag_base_bot(bot_name, memory_flag, rag_flag):
 			with messages.chat_message("assistant"):
 				prompt_template = prompt_template_function_rag(prompt, memory_flag, rag_flag)
 				stream = client.chat.completions.create(
-					model=st.session_state.openai_model,
+					model=st.session_state.default_llm_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
 						{"role": "user", "content": prompt},

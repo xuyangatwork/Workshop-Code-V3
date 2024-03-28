@@ -565,7 +565,7 @@ def prototype_cohere_bot(bot_name= PROTOTYPE):
 def template_prompt(prompt, prompt_template):
 	client = OpenAI(api_key=return_openai_key())
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model=st.session_state.default_llm_model,
 		messages=[
 			{"role": "system", "content":prompt_template},
 			{"role": "user", "content": prompt},
