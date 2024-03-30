@@ -14,6 +14,7 @@ moe/
 cache/
 .DS_Store
 test.py
+duck_db.py
 prompt_analyser copy.py
 resources/nltk_data_dir/
 prompt_module_backup.py

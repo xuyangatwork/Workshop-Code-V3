@@ -4,7 +4,8 @@ import pandas as pd
 import configparser
 import streamlit_antd_components as sac
 import ast
-from basecode2.duck_db import initialise_duckdb, check_condition_value, insert_condition_value, get_value_by_condition
+#from basecode2.duck_db import initialise_duckdb, check_condition_value, insert_condition_value, get_value_by_condition
+from basecode2.sqlite_db import create_sql_db, check_condition_value, insert_condition_value
 from pymongo import MongoClient
 #from bson import ObjectId
 import time
@@ -58,7 +59,7 @@ def load_user_profile():
 def initialise_admin_account():
 	
 	#initialise_duckdb() if does not exist
-	initialise_duckdb()
+	create_sql_db()
 
 	if "s_collection" in st.session_state:
 		st.session_state.s_collection = None
