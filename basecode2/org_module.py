@@ -6,6 +6,7 @@ import streamlit_antd_components as sac
 import ast
 #from basecode2.duck_db import initialise_duckdb, check_condition_value, insert_condition_value, get_value_by_condition
 from basecode2.sqlite_db import create_sql_db, check_condition_value, insert_condition_value
+
 from pymongo import MongoClient
 #from bson import ObjectId
 import time
@@ -57,31 +58,29 @@ def load_user_profile():
 		return False
 
 def initialise_admin_account():
-	
 	#initialise_duckdb() if does not exist
-	create_sql_db()
-
 	if "s_collection" in st.session_state:
 		st.session_state.s_collection = None
 	if "u_collection" in st.session_state:
 		st.session_state.u_collection = None
-	# if "c_collection" in st.session_state:
-	# 	st.session_state.c_collection = None
-	#this portion can either be in st.secrets or password manager in AWS
-		
+	# Connect to MongoDB
 	if "URI" in st.secrets["MONGO"]:
 		MONGO_URI = st.secrets["MONGO"]["URI"]
 		DATABASE_NAME = st.secrets["MONGO"]["DATABASE"]
 		
 	else:
 		aws_secret_manager()
-		
-	
-	# Connect to MongoDB
 	client = MongoClient(MONGO_URI, tls=True,tlsAllowInvalidCertificates=True)
 	db = client[DATABASE_NAME]
 	st.session_state.s_collection = db["schools"]
 	st.session_state.u_collection = db["users"]
+	create_sql_db()
+	# if "c_collection" in st.session_state:
+	# 	st.session_state.c_collection = None
+	#this portion can either be in st.secrets or password manager in AWS
+		
+		
+	
 	# st.session_state.c_collection = db["conversation"]
 	if check_condition_value(ALL_ORG, True):
 		return
@@ -133,7 +132,8 @@ def create_users(sch_name, num_users, default_password, profile="", username_pre
 		user_prefix = sch_name[:3]
 
 	for i in range(starting_user_id, starting_user_id + num_users):
-		username = f"{user_prefix}_{i}"  # Adjust username format to use the updated starting index
+		username = f"{user_prefix}_{i}"# Adjust username format to use the updated starting index
+		username = username.lower()  # Convert username to lowercase
 		hashed_pwd = hash_password(default_password)  # Assume hash_password is a function you've defined to hash passwords
 		
 		user_doc = {
@@ -324,6 +324,7 @@ def edit_usernames(school_name):
 	for user in users:
 		user_key = f"username_{user['_id']}"
 		new_username = st.text_input(f"Edit Username for {user['username']}", value=user['username'], key=user_key)
+		new_username = new_username.lower()  # Convert username to lowercase
 		new_usernames[user['_id']] = new_username
 
 	if st.button("Update Usernames"):
@@ -411,15 +412,20 @@ def setup_users():
 	elif st.session_state.user['profile_id'] == AD:
 		st.write(f":green[School Selected: {st.session_state.user['school_id']}]")
 		school = st.session_state.user['school_id']
-		action = st.selectbox('Select Action', ['Edit User', 'Remove User', 'Create Users'], key='u_action')
+		action = st.selectbox('Select Action', ['Edit User', 'Remove User', 'Create Users', 'Edit Usernames'], key='u_action')
 		if action == 'Edit User':
 			setup_mass_edit_users(school)
 		elif action == 'Remove User':
 			main_delete_users(school)
 		elif action == 'Create Users':
+				sch_profiles_copy = SCH_PROFILES.copy()
+				# Step 2: Remove "No Profile" from the copy if it exists
+				if "No Profile" in sch_profiles_copy:
+					sch_profiles_copy.remove("No Profile")
+					sch_profiles_copy.remove("Developer")
 		
 				num_users = st.number_input("Number of Users to Create", min_value=1, value=1, step=1)
-				default_profile = st.selectbox("Select Profile", SCH_PROFILES.remove("No Profile"), key='profile')
+				default_profile = st.selectbox("Select Profile", sch_profiles_copy, key='profile')
 				default_password = st.text_input("Default Password", value=st.session_state.default_password, type="password")
 				if st.button("Create Users"):
 					if school and default_password:

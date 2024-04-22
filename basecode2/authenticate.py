@@ -7,6 +7,7 @@ import hashlib
 def login_function():
 	with st.form("Student login"):
 		username = st.text_input("Enter Username:", max_chars=20)
+		username = username.lower()
 		password = st.text_input("Enter Password:", type="password", max_chars=16)
 		submit_button = st.form_submit_button("Login")
 		 # On submit, check if new passwords match and then update the password.

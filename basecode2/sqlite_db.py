@@ -61,7 +61,7 @@ def create_sql_db():
 	)
 	''')
  
-	conn.execute('''
+	cursor.execute('''
 	CREATE TABLE IF NOT EXISTS app_config_table (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		condition TEXT,
@@ -103,6 +103,7 @@ def check_condition_value(condition, value):
 		""", (condition, value)).fetchone()
 		
 		if query_result is not None:
+			#print(query_result[0])
 			return query_result[0] == 1
 		else:
 			# Handle the case where query_result is None
