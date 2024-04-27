@@ -124,7 +124,6 @@ def check_condition_value(condition, value):
 
 
 def insert_condition_value(condition, value):
-	"""Inserts a new condition and its value into the app_config_table."""
 	conn.execute("""
 		INSERT INTO app_config_table (condition, value) VALUES (?, ?)
 	""", (condition, value))

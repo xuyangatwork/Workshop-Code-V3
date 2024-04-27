@@ -127,7 +127,7 @@ def load_user_settings(field_name, dict): #load_prompt setting
 
 def reset_app_settings(default_dict):
 	# Place the button to reset settings
-	if st.button("Reset Settings"):
+	if st.button("Reset Prompt Templates"):
 		# Temporarily store the reset request in session state to persist across reruns
 		st.session_state.pending_reset = True
 
@@ -179,7 +179,7 @@ def set_prompt_settings():
 
 		st.write("Action completed successfully.")
 	st.divider()
-	st.write("### :red[Warning - Reset Settings]")
+	st.write("### :red[Warning - Reset Personal Prompt Templates]")
 	reset_app_settings(PROMPT_CONFIG)
 
 def perform_modification_and_update_session_state(action, field, new_key, new_value, username, excluded_fields):

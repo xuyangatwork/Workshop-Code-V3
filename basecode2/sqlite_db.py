@@ -60,5 +60,57 @@ def create_sql_db():
 		school_id TEXT NOT NULL
 	)
 	''')
+ 
+	cursor.execute('''
+	CREATE TABLE IF NOT EXISTS app_config_table (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		condition TEXT,
+		value TEXT
+	)
+	''')
 
 	conn.commit()
+	conn.close()
+
+def insert_condition_value(condition, value):
+	cwd = os.getcwd()
+	WORKING_DIRECTORY = os.path.join(cwd, "database")
+	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
+	conn = sqlite3.connect(WORKING_DATABASE)
+	cursor = conn.cursor()
+
+	# Insert data into Data_Table using preloaded session state value
+	cursor.execute('''
+		INSERT INTO app_config_table (condition, value)
+		VALUES (?, ?)
+	''', (condition,value))
+
+	conn.commit()
+ 
+ 
+def check_condition_value(condition, value):
+	cwd = os.getcwd()
+	WORKING_DIRECTORY = os.path.join(cwd, "database")
+	WORKING_DATABASE = os.path.join(WORKING_DIRECTORY , SQL_DB)
+	conn = sqlite3.connect(WORKING_DATABASE)
+	cursor = conn.cursor()
+	"""Checks if a given condition and its value exist in the app_config_table."""
+	try:
+		query_result = conn.execute("""
+			SELECT EXISTS (
+				SELECT 1 FROM app_config_table WHERE condition = ? AND value = ?
+			);
+		""", (condition, value)).fetchone()
+		
+		if query_result is not None:
+			#print(query_result[0])
+			return query_result[0] == 1
+		else:
+			# Handle the case where query_result is None
+			conn.close()
+			return False
+	except Exception as e:
+		# Log the exception or handle it as needed
+		print(f"An error occurred: {e}")
+		conn.close()
+		return False
